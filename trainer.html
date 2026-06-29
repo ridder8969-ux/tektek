@@ -8,24 +8,24 @@
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
 
   :root{
-    --bg:#0a0e14;
-    --bg2:#0f1622;
-    --panel:#131c2b;
-    --panel-hi:#1a2638;
-    --ink:#eaf2ff;
-    --ink-dim:#9fb3cc;
-    --ink-faint:#647890;
-    --volt:#19d4ff;
-    --volt-deep:#0a8fc4;
-    --danger:#ff6a2b;
-    --danger-bg:#2a160c;
-    --safe:#2bd97a;
-    --warn:#ffd23f;
-    --line:#22304a;
-    --xb-x:#3b82f6;
-    --xb-y:#f2c014;
-    --xb-a:#22b04a;
-    --xb-b:#e0392b;
+    --bg:#0c0e12;
+    --bg2:#10131a;
+    --panel:#14181f;
+    --panel-hi:#181d26;
+    --ink:#e8ebf0;
+    --ink-dim:#9aa3b2;
+    --ink-faint:#646e7e;
+    --volt:#4d9fff;
+    --volt-deep:#2f6dba;
+    --danger:#e8704a;
+    --danger-bg:rgba(232,112,74,0.12);
+    --safe:#4ec77f;
+    --warn:#e3b341;
+    --line:#222834;
+    --xb-x:#5b8def;
+    --xb-y:#d4a82a;
+    --xb-a:#4a9d5e;
+    --xb-b:#cc4f44;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -54,10 +54,9 @@
   .bolt-bg{
     position:absolute;inset:0;
     background-image:
-      linear-gradient(115deg, transparent 49.6%, rgba(25,212,255,0.10) 49.8%, rgba(25,212,255,0.10) 50.2%, transparent 50.4%),
-      linear-gradient(115deg, transparent 64.6%, rgba(25,212,255,0.05) 64.8%, rgba(25,212,255,0.05) 65.2%, transparent 65.4%);
-    background-size:120px 100%, 200px 100%;
-    opacity:.7;
+      linear-gradient(115deg, transparent 49.7%, rgba(77,159,255,0.04) 49.85%, rgba(77,159,255,0.04) 50.15%, transparent 50.3%);
+    background-size:180px 100%;
+    opacity:.5;
     pointer-events:none;
   }
   .eyebrow{
@@ -72,11 +71,11 @@
   h1{
     font-family:'Rajdhani',sans-serif;
     font-weight:700;
-    font-size:clamp(2.8rem,9vw,5.4rem);
+    font-size:clamp(2.2rem,6vw,3.4rem);
     line-height:.9;
     letter-spacing:.02em;
     position:relative;
-    text-shadow:0 0 38px rgba(25,212,255,0.35);
+    text-shadow:none;
   }
   h1 .spark{color:var(--volt)}
   .subtitle{
@@ -179,7 +178,7 @@
   .tab:hover{color:var(--ink);background:var(--panel)}
   .tab.active{
     color:#06101c;background:var(--volt);
-    box-shadow:0 0 20px rgba(25,212,255,0.4);
+    box-shadow:none;
   }
 
   /* ---------- LAYOUT ---------- */
