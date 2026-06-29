@@ -149,9 +149,29 @@ function pick(obj, keys) {
   }
   return "";
 }
+// Coerce any field value to a clean display string.
+// TekkenDocs sometimes returns a field as an object like {value:"..."} or {display:"..."}
+// or an array of segments. This digs out the human-readable text.
 function clean(v) {
   if (v === undefined || v === null) return "";
-  return String(v).trim();
+  if (typeof v === "string") return v.trim();
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) {
+    return v.map(item => clean(item)).filter(Boolean).join(" ");
+  }
+  if (typeof v === "object") {
+    // try common value-bearing properties first
+    const inner = pick(v, ["value","display","text","name","val","formatted","raw","label","content"]);
+    if (inner !== "") return clean(inner);
+    // otherwise join any primitive leaf values
+    const leaves = Object.values(v).map(x => {
+      if (typeof x === "string" || typeof x === "number") return String(x);
+      return "";
+    }).filter(Boolean);
+    if (leaves.length) return leaves.join(" ");
+    return "";
+  }
+  return String(v);
 }
 
 function json(obj, status, cors) {
