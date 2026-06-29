@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Lookup — Lars Lightning Trainer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+  :root{
+    --bg:#0a0e14;--bg2:#0f1622;--panel:#131c2b;--panel-hi:#1a2638;
+    --ink:#eaf2ff;--ink-dim:#9fb3cc;--ink-faint:#647890;
+    --volt:#19d4ff;--volt-deep:#0a8fc4;--danger:#ff6a2b;--danger-bg:#2a160c;
+    --safe:#2bd97a;--warn:#ffd23f;--line:#22304a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, rgba(25,212,255,0.08), transparent 60%), var(--bg);
+    color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding-bottom:80px;min-height:100vh;
+  }
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--bg2),var(--bg));flex-wrap:wrap;
+  }
+  .brand{font-family:'Rajdhani';font-weight:700;font-size:1.5rem;letter-spacing:.02em}
+  .brand .spark{color:var(--volt)}
+  .back{
+    font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--volt);
+    text-decoration:none;border:1px solid var(--line);padding:8px 14px;border-radius:9px;
+    transition:all .15s;
+  }
+  .back:hover{background:var(--panel);border-color:var(--volt-deep)}
+
+  .wrap{max-width:860px;margin:0 auto;padding:34px 20px 0}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;letter-spacing:.4em;text-transform:uppercase;
+    font-size:.64rem;color:var(--volt);margin-bottom:12px;text-align:center;
+  }
+  h1{
+    font-family:'Rajdhani';font-weight:700;font-size:clamp(2rem,6vw,3.2rem);
+    line-height:.95;text-align:center;text-shadow:0 0 30px rgba(25,212,255,0.3);
+  }
+  .sub{color:var(--ink-dim);text-align:center;max-width:520px;margin:14px auto 0;font-size:.95rem}
+
+  /* search box */
+  .searchbar{
+    display:flex;gap:10px;margin:30px auto 0;max-width:560px;flex-wrap:wrap;
+  }
+  .searchbar input{
+    flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);
+    color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:1rem;
+    padding:14px 16px;border-radius:11px;outline:none;transition:border-color .15s;
+  }
+  .searchbar input:focus{border-color:var(--volt)}
+  .searchbar input::placeholder{color:var(--ink-faint)}
+  .searchbar button{
+    background:var(--volt);color:#06101c;border:none;font-family:'Rajdhani';
+    font-weight:700;font-size:1.05rem;letter-spacing:.03em;padding:0 26px;
+    border-radius:11px;cursor:pointer;transition:all .15s;
+    box-shadow:0 0 20px rgba(25,212,255,0.35);
+  }
+  .searchbar button:hover{filter:brightness(1.1)}
+  .searchbar button:disabled{opacity:.5;cursor:wait;box-shadow:none}
+
+  .hint{
+    text-align:center;color:var(--ink-faint);font-size:.8rem;margin-top:12px;
+  }
+  .hint code{
+    background:var(--panel);padding:2px 7px;border-radius:5px;
+    font-family:'JetBrains Mono',monospace;color:var(--volt);
+  }
+
+  /* saved friends chips */
+  .friends{
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:18px auto 0;max-width:620px;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;
+    font-size:.84rem;cursor:pointer;transition:all .15s;
+  }
+  .chip:hover{border-color:var(--volt-deep)}
+  .chip .x{
+    width:18px;height:18px;border-radius:50%;background:var(--panel-hi);
+    color:var(--ink-faint);display:inline-flex;align-items:center;justify-content:center;
+    font-size:.7rem;line-height:1;
+  }
+  .chip .x:hover{background:var(--danger-bg);color:var(--danger)}
+
+  /* states */
+  .state{text-align:center;margin:40px auto;color:var(--ink-dim)}
+  .spinner{
+    width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--volt);
+    border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .errbox{
+    background:var(--danger-bg);border:1px solid rgba(255,106,43,0.4);border-radius:12px;
+    padding:18px 20px;color:#ffd5c4;max-width:560px;margin:30px auto;
+  }
+  .errbox b{color:var(--danger);font-family:'Rajdhani';font-size:1.05rem}
+
+  /* result card */
+  .result{margin:34px auto 0;display:none}
+  .pcard{
+    background:linear-gradient(160deg,var(--panel-hi),var(--panel));
+    border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:18px;
+    position:relative;overflow:hidden;
+  }
+  .pcard::before{
+    content:'';position:absolute;top:-40%;right:-10%;width:300px;height:300px;
+    background:radial-gradient(circle,rgba(25,212,255,0.12),transparent 70%);pointer-events:none;
+  }
+  .pname{font-family:'Rajdhani';font-weight:700;font-size:1.8rem;position:relative}
+  .pmeta{
+    display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;position:relative;
+    font-size:.86rem;color:var(--ink-dim);
+  }
+  .pmeta .m b{color:var(--volt);font-family:'JetBrains Mono',monospace}
+
+  .grid{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:18px}
+  .stat{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;
+  }
+  .stat .label{
+    font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;
+  }
+  .stat .value{font-family:'Rajdhani';font-weight:700;font-size:1.7rem;line-height:1}
+  .stat .value.win{color:var(--safe)}
+  .stat .value.loss{color:var(--danger)}
+  .stat .value.volt{color:var(--volt)}
+
+  .section-label{
+    font-family:'Rajdhani';font-weight:700;font-size:1.25rem;margin:6px 0 12px;
+    color:var(--volt);display:flex;align-items:center;gap:10px;
+  }
+
+  /* battles table */
+  .battles{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  }
+  .brow{
+    display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+    padding:12px 16px;border-bottom:1px solid var(--line);
+  }
+  .brow:last-child{border-bottom:none}
+  .brow:hover{background:var(--panel-hi)}
+  .brow .res{
+    font-family:'Rajdhani';font-weight:700;font-size:.9rem;width:42px;text-align:center;
+    border-radius:6px;padding:3px 0;
+  }
+  .brow .res.w{background:rgba(43,217,122,0.15);color:var(--safe)}
+  .brow .res.l{background:rgba(255,106,43,0.15);color:var(--danger)}
+  .brow .opp{font-size:.9rem}
+  .brow .opp .chr{color:var(--ink-faint);font-size:.78rem}
+  .brow .when{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint)}
+
+  /* raw data toggle */
+  .raw-toggle{
+    margin:18px auto 0;text-align:center;
+  }
+  .raw-toggle button{
+    background:transparent;border:1px solid var(--line);color:var(--ink-faint);
+    font-family:'JetBrains Mono',monospace;font-size:.74rem;padding:7px 14px;
+    border-radius:8px;cursor:pointer;transition:all .15s;
+  }
+  .raw-toggle button:hover{color:var(--volt);border-color:var(--volt-deep)}
+  pre.raw{
+    display:none;background:#060a10;border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin-top:12px;overflow-x:auto;font-family:'JetBrains Mono',monospace;
+    font-size:.72rem;color:var(--ink-dim);max-height:340px;
+  }
+
+  footer{
+    max-width:860px;margin:50px auto 0;padding:22px 20px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:.78rem;text-align:center;
+  }
+  footer a{color:var(--volt-deep);text-decoration:none}
+  @media(max-width:520px){
+    .brow{grid-template-columns:auto 1fr;gap:8px}
+    .brow .when{grid-column:2;text-align:left}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="./index.html" style="text-decoration:none;color:inherit">LARS<span class="spark">.</span> <span style="color:var(--ink-faint);font-size:1rem;font-weight:500">Player Lookup</span></a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="back" href="./trainer.html">⚡ Trainer</a>
+    <a class="back" href="./framedata.html">📊 Frame Data</a>
+    <a class="back" href="./resources.html">🔗 Resources</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">EWGF.GG · Ranked Stats</div>
+  <h1>Look up a player.</h1>
+  <p class="sub">Paste a Tekken ID to pull their ranked stats and recent battles. For you and your crew — see who's actually winning.</p>
+
+  <div class="searchbar">
+    <input id="idInput" type="text" placeholder="Tekken ID  (e.g. 5LrJB8LReLJB)" autocomplete="off" spellcheck="false">
+    <button id="goBtn">Look Up</button>
+  </div>
+  <div class="hint">Find your Tekken ID in-game under your profile, or in a player card. Example: <code>5LrJB8LReLJB</code></div>
+
+  <div class="friends" id="friends"></div>
+
+  <div class="state" id="loading" style="display:none">
+    <div class="spinner"></div>
+    Pulling stats from EWGF…
+  </div>
+
+  <div id="errSlot"></div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<footer>
+  Stats from <a href="https://www.ewgf.gg" target="_blank" rel="noopener">ewgf.gg</a> · unofficial Tekken 8 statistics.
+  Free tier = 100 lookups/day shared across everyone using this site.<br>
+  Built for RIDD &amp; crew.
+</footer>
+
+<script>
+const FRIENDS_KEY = "lars_saved_friends";
+
+const idInput = document.getElementById("idInput");
+const goBtn   = document.getElementById("goBtn");
+const loading = document.getElementById("loading");
+const errSlot = document.getElementById("errSlot");
+const result  = document.getElementById("result");
+const friendsBox = document.getElementById("friends");
+
+// ---- saved friends (browser storage) ----
+function getFriends(){
+  try{ return JSON.parse(localStorage.getItem(FRIENDS_KEY) || "[]"); }catch(e){ return []; }
+}
+function saveFriend(id, name){
+  let list = getFriends();
+  if(!list.find(f => f.id === id)){
+    list.push({ id, name: name || id });
+    try{ localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  renderFriends();
+}
+function removeFriend(id){
+  let list = getFriends().filter(f => f.id !== id);
+  try{ localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); }catch(e){}
+  renderFriends();
+}
+function renderFriends(){
+  const list = getFriends();
+  friendsBox.innerHTML = "";
+  if(list.length === 0) return;
+  list.forEach(f => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `<span class="cname">${escapeHtml(f.name)}</span>`;
+    chip.querySelector(".cname").addEventListener("click", () => { idInput.value = f.id; lookup(); });
+    const x = document.createElement("span");
+    x.className = "x"; x.textContent = "×"; x.title = "Remove";
+    x.addEventListener("click", (e) => { e.stopPropagation(); removeFriend(f.id); });
+    chip.appendChild(x);
+    friendsBox.appendChild(chip);
+  });
+}
+
+// ---- helpers ----
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// Pull a value from an object trying several possible key names (EWGF field names may vary).
+function pick(obj, keys, fallback){
+  if(!obj) return fallback;
+  for(const k of keys){
+    if(obj[k] !== undefined && obj[k] !== null) return obj[k];
+  }
+  return fallback;
+}
+function fmtDate(v){
+  if(!v) return "";
+  let d;
+  if(typeof v === "number") d = new Date(v < 2e12 ? v*1000 : v); // sec vs ms
+  else d = new Date(v);
+  if(isNaN(d)) return String(v);
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + " " +
+         d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+}
+
+// ---- main lookup ----
+async function lookup(){
+  const id = idInput.value.trim();
+  errSlot.innerHTML = "";
+  result.style.display = "none";
+  if(!id){ showError("Enter a Tekken ID first."); return; }
+
+  loading.style.display = "block";
+  goBtn.disabled = true;
+
+  try{
+    const res = await fetch(`/api/player?id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    loading.style.display = "none";
+    goBtn.disabled = false;
+
+    if(!res.ok || data.error){
+      showError(data.error || "Lookup failed.");
+      return;
+    }
+    render(data);
+  }catch(err){
+    loading.style.display = "none";
+    goBtn.disabled = false;
+    showError("Couldn't reach the lookup service. If you're opening this as a local file, the player search only works once the site is deployed (see the setup guide).");
+  }
+}
+
+function showError(msg){
+  errSlot.innerHTML = `<div class="errbox"><b>Couldn't load that.</b><br>${escapeHtml(msg)}</div>`;
+}
+
+// ---- render (defensive: shows whatever EWGF returns) ----
+function render(data){
+  const p = data.profile || {};
+  const b = data.battles || {};
+
+  // battles may be an array directly, or nested under a key
+  let battleList = Array.isArray(b) ? b : (b.battles || b.data || b.matches || []);
+  if(!Array.isArray(battleList)) battleList = [];
+
+  const name = pick(p, ["name","player_name","playerName","username","tekkenName"], data.id);
+  const region = pick(p, ["region","area","regionName"], "");
+  const platform = pick(p, ["platform","platformName","plat"], "");
+  const mainChar = pick(p, ["main_character","mainCharacter","character","mostPlayedCharacter"], "");
+
+  // Compute W/L from the battle list if we can.
+  let wins = 0, losses = 0;
+  battleList.forEach(m => {
+    const w = pick(m, ["winner","result","won","outcome"], null);
+    const playerWon = (w === 1 || w === "win" || w === "W" || w === true ||
+                       pick(m,["player_won","playerWon"],null) === true);
+    if(playerWon) wins++; else if(w !== null) losses++;
+  });
+  const total = wins + losses;
+  const wr = total ? Math.round((wins/total)*100) : null;
+
+  let html = `
+    <div class="pcard">
+      <div class="pname">${escapeHtml(name)}</div>
+      <div class="pmeta">
+        <span class="m">ID&nbsp; <b>${escapeHtml(data.id)}</b></span>
+        ${region ? `<span class="m">Region&nbsp; <b>${escapeHtml(region)}</b></span>` : ""}
+        ${platform ? `<span class="m">Platform&nbsp; <b>${escapeHtml(platform)}</b></span>` : ""}
+        ${mainChar ? `<span class="m">Main&nbsp; <b>${escapeHtml(mainChar)}</b></span>` : ""}
+      </div>
+    </div>`;
+
+  // Stat tiles (only the ones we could compute)
+  let tiles = "";
+  if(total){
+    tiles += `<div class="stat"><div class="label">Recent W / L</div><div class="value"><span class="win">${wins}</span> <span style="color:var(--ink-faint)">/</span> <span class="loss">${losses}</span></div></div>`;
+  }
+  if(wr !== null){
+    tiles += `<div class="stat"><div class="label">Win Rate (recent)</div><div class="value ${wr>=50?'win':'loss'}">${wr}%</div></div>`;
+  }
+  // surface any obvious top-level numeric profile fields too
+  const ratingVal = pick(p,["rating","glicko","glicko2","rank_points","rankPoints"],null);
+  if(ratingVal !== null){
+    tiles += `<div class="stat"><div class="label">Rating</div><div class="value volt">${escapeHtml(ratingVal)}</div></div>`;
+  }
+  const rankVal = pick(p,["rank","highest_rank","highestRank","currentRank"],null);
+  if(rankVal !== null){
+    tiles += `<div class="stat"><div class="label">Rank</div><div class="value volt" style="font-size:1.2rem">${escapeHtml(rankVal)}</div></div>`;
+  }
+  if(tiles) html += `<div class="grid">${tiles}</div>`;
+
+  // Recent battles
+  if(battleList.length){
+    html += `<div class="section-label">⚔️ Recent Battles</div><div class="battles">`;
+    battleList.slice(0, 20).forEach(m => {
+      const w = pick(m, ["winner","result","won","outcome"], null);
+      const playerWon = (w === 1 || w === "win" || w === "W" || w === true ||
+                         pick(m,["player_won","playerWon"],null) === true);
+      const opp = pick(m, ["opponent_name","opponentName","p2_name","opponent","foe"], "Opponent");
+      const oppChar = pick(m, ["opponent_character","opponentCharacter","p2_character","opp_char"], "");
+      const when = fmtDate(pick(m, ["battle_at","date","timestamp","played_at","time"], null));
+      html += `
+        <div class="brow">
+          <div class="res ${playerWon?'w':'l'}">${playerWon?'WIN':'LOSS'}</div>
+          <div class="opp">${escapeHtml(opp)}${oppChar?`<span class="chr"> · ${escapeHtml(oppChar)}</span>`:""}</div>
+          <div class="when">${escapeHtml(when)}</div>
+        </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="state">No recent battles returned for this player.</div>`;
+  }
+
+  // Save-as-friend button
+  html += `
+    <div class="raw-toggle">
+      <button id="saveFriendBtn">★ Save to my crew</button>
+      <button id="rawBtn">view raw data</button>
+    </div>
+    <pre class="raw" id="rawPre">${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+
+  result.innerHTML = html;
+  result.style.display = "block";
+
+  // wire up buttons
+  const saveBtn = document.getElementById("saveFriendBtn");
+  if(saveBtn) saveBtn.addEventListener("click", () => {
+    saveFriend(data.id, name);
+    saveBtn.textContent = "✓ Saved";
+    saveBtn.disabled = true;
+  });
+  const rawBtn = document.getElementById("rawBtn");
+  const rawPre = document.getElementById("rawPre");
+  if(rawBtn) rawBtn.addEventListener("click", () => {
+    const showing = rawPre.style.display === "block";
+    rawPre.style.display = showing ? "none" : "block";
+    rawBtn.textContent = showing ? "view raw data" : "hide raw data";
+  });
+}
+
+// events
+goBtn.addEventListener("click", lookup);
+idInput.addEventListener("keydown", e => { if(e.key === "Enter") lookup(); });
+
+// init
+renderFriends();
+// allow ?id= in URL to auto-search (handy for sharing a link)
+const urlId = new URLSearchParams(location.search).get("id");
+if(urlId){ idInput.value = urlId; lookup(); }
+</script>
+</body>
+</html>

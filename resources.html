@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resources — Lightning Trainer</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .res-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:8px}
+  .res{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;
+    text-decoration:none;color:inherit;display:block;transition:border-color .15s,transform .15s;position:relative}
+  .res:hover{border-color:var(--volt);transform:translateY(-2px)}
+  .res .rtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .res h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem}
+  .res .kind{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 8px;border-radius:6px;font-weight:700;white-space:nowrap}
+  .kind.live{background:rgba(43,217,122,0.14);color:var(--safe);border:1px solid rgba(43,217,122,0.3)}
+  .kind.ref{background:rgba(26,214,255,0.14);color:var(--volt);border:1px solid rgba(26,214,255,0.3)}
+  .kind.tool{background:rgba(255,210,63,0.12);color:var(--warn);border:1px solid rgba(255,210,63,0.3)}
+  .res p{color:var(--ink-dim);font-size:.88rem}
+  .res .url{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--volt-deep);margin-top:10px;word-break:break-all}
+  .cat{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.5rem;margin:34px 0 14px;display:flex;align-items:center;gap:12px}
+  .cat .bar{width:8px;height:24px;background:var(--volt);border-radius:3px}
+  .keytable{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 0;font-size:.8rem;color:var(--ink-dim)}
+  .keytable .k{display:flex;align-items:center;gap:7px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html">LARS<span class="bolt">.</span></a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink active" href="./resources.html">Resources</a>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">The good stuff, honestly labeled</div>
+  <h1 class="page">Resources.</h1>
+  <p class="lead">The best Tekken 8 data tools on the web. Some power this site directly; others are reference sites or community projects worth knowing. Labeled by what they actually are.</p>
+
+  <div class="keytable">
+    <span class="k"><span class="kind live">Live</span> powers this site / live API</span>
+    <span class="k"><span class="kind ref">Reference</span> a site to read</span>
+    <span class="k"><span class="kind tool">Tool</span> code / offline project</span>
+  </div>
+
+  <div class="cat"><span class="bar"></span> Frame data</div>
+  <div class="res-grid">
+    <a class="res" href="https://tekkendocs.com" target="_blank" rel="noopener">
+      <div class="rtop"><h3>TekkenDocs</h3><span class="kind live">Live</span></div>
+      <p>Open frame data for all characters, updated within days of each patch. This is the source behind our Frame Data page. Also has guides, cheat sheets, and combo notes.</p>
+      <div class="url">tekkendocs.com</div>
+    </a>
+    <a class="res" href="https://okizeme.gg/database/lars" target="_blank" rel="noopener">
+      <div class="rtop"><h3>Okizeme.gg</h3><span class="kind ref">Reference</span></div>
+      <p>Slick frame-data database where you can watch every move frame-by-frame on video. No public API, so we link it rather than pull from it — but excellent for studying move animations.</p>
+      <div class="url">okizeme.gg</div>
+    </a>
+    <a class="res" href="https://wavu.wiki/t/Main_Page" target="_blank" rel="noopener">
+      <div class="rtop"><h3>Wavu Wiki</h3><span class="kind ref">Reference</span></div>
+      <p>The community wiki that much of the frame data ultimately traces back to. Deep dives on every character, mechanics explanations, and combo theory. The upstream source.</p>
+      <div class="url">wavu.wiki</div>
+    </a>
+  </div>
+
+  <div class="cat"><span class="bar"></span> Player &amp; ranked stats</div>
+  <div class="res-grid">
+    <a class="res" href="https://www.ewgf.gg" target="_blank" rel="noopener">
+      <div class="rtop"><h3>EWGF.gg</h3><span class="kind live">Live</span></div>
+      <p>Player profiles, leaderboards, rank distribution, and meta stats. Powers our Player Lookup through their API. Their own site goes even deeper — character matchup stats, win rates by rank, and more.</p>
+      <div class="url">ewgf.gg</div>
+    </a>
+    <a class="res" href="https://wank.wavu.wiki/" target="_blank" rel="noopener">
+      <div class="rtop"><h3>Wavu Wank</h3><span class="kind ref">Reference</span></div>
+      <p>Glicko-2 ratings and online ranked statistics, built from a massive replay database (580M+ games). Its API is a bulk replay feed — great for global meta analysis, not single-player lookup.</p>
+      <div class="url">wank.wavu.wiki</div>
+    </a>
+  </div>
+
+  <div class="cat"><span class="bar"></span> Community tools &amp; data projects</div>
+  <div class="res-grid">
+    <a class="res" href="https://github.com/pbruvoll/tekkendocs" target="_blank" rel="noopener">
+      <div class="rtop"><h3>TekkenDocs (source)</h3><span class="kind tool">Tool</span></div>
+      <p>The open-source code behind TekkenDocs. Built with Remix. Worth a look if you ever want to understand how the frame-data pipeline works.</p>
+      <div class="url">github.com/pbruvoll/tekkendocs</div>
+    </a>
+    <a class="res" href="https://github.com/elgonio/TK8-thing" target="_blank" rel="noopener">
+      <div class="rtop"><h3>TK8-thing</h3><span class="kind tool">Tool</span></div>
+      <p>Python project that pulls match data from the Wavu Wank firehose and generates rank-distribution and character win-rate charts. Research code — run it yourself to crunch your own stats.</p>
+      <div class="url">github.com/elgonio/TK8-thing</div>
+    </a>
+    <a class="res" href="https://github.com/chiefeelface/Tekken-8-Data-Tools" target="_blank" rel="noopener">
+      <div class="rtop"><h3>Tekken-8-Data-Tools</h3><span class="kind tool">Tool</span></div>
+      <p>Another replay downloader/analyzer — saves replays to CSV or SQLite for custom queries (win rate by rank, by character, etc.). For when you want to dig into the raw numbers yourself.</p>
+      <div class="url">github.com/chiefeelface/Tekken-8-Data-Tools</div>
+    </a>
+  </div>
+
+  <div class="callout info" style="margin-top:34px">
+    <div class="co-title">Why some are "reference" not "live"</div>
+    <p>To pull data into this site automatically, a source needs a clean public API that returns structured data. TekkenDocs and EWGF have that. Okizeme and Wavu Wiki render their data in ways that can't be cleanly fetched, and the GitHub tools are offline programs — so those we link to instead. Honest about what connects and what doesn't.</p>
+  </div>
+</div>
+
+<footer class="site">
+  All sites credited to their creators. This toolkit isn't affiliated with any of them or with Bandai Namco.<br>
+  Built for RIDD &amp; crew.
+</footer>
+
+</body>
+</html>
