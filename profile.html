@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Profile — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .form-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;max-width:680px;margin:0 auto}
+  .frow{margin-bottom:18px}
+  .frow label{display:block;font-size:.8rem;font-weight:600;color:var(--ink-dim);margin-bottom:6px}
+  .frow input,.frow select{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:.95rem;padding:11px 13px;border-radius:var(--radius-sm);outline:none;font-family:inherit}
+  .frow input:focus,.frow select:focus{border-color:var(--accent)}
+  .frow .hint{font-size:.74rem;color:var(--ink-faint);margin-top:5px}
+  .frow.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .frow.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .save-row{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .save-msg{font-size:.85rem}
+  .save-msg.ok{color:var(--good)} .save-msg.err{color:var(--bad)}
+  .danger-zone{max-width:680px;margin:26px auto 0;border:1px solid rgba(240,102,75,0.3);border-radius:var(--radius);padding:20px;background:var(--bad-soft)}
+  .danger-zone h3{color:var(--bad);font-size:1rem;font-weight:700;margin-bottom:6px}
+  .danger-zone p{color:var(--ink-dim);font-size:.85rem;margin-bottom:14px}
+  .loadingwrap{text-align:center;margin:80px auto;color:var(--ink-dim)}
+  .auth-gate{max-width:460px;margin:80px auto;text-align:center}
+  fieldset{border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:18px}
+  legend{font-size:.78rem;font-weight:700;color:var(--accent);padding:0 8px;text-transform:uppercase;letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Your Profile</div>
+  <h1 class="page">Edit Profile</h1>
+  <p class="lead">This personalizes your dashboard, frame data, and coaching. Everything saves to your account.</p>
+
+  <div class="loadingwrap" id="loading"><div class="spinner"></div>Loading…</div>
+  <div class="auth-gate" id="gate" style="display:none"><h1 style="font-size:1.4rem">Please sign in</h1><p style="color:var(--ink-dim)">You need an account to edit your profile.</p><a class="btn" href="./dashboard.html">Go to sign in</a></div>
+
+  <div id="formWrap" style="display:none">
+    <div class="form-card">
+      <fieldset>
+        <legend>Identity</legend>
+        <div class="frow"><label>Username</label><input id="username" maxlength="24" placeholder="e.g. RIDD" autocomplete="off"><div class="hint">3–24 characters: letters, numbers, underscore.</div></div>
+        <div class="frow two">
+          <div><label>Platform</label><select id="platform"><option value="">—</option><option value="steam">Steam</option><option value="xbox">Xbox</option><option value="playstation">PlayStation</option></select></div>
+          <div><label>Country</label><input id="country" maxlength="40" placeholder="e.g. US"></div>
+        </div>
+        <div class="frow"><label>Tekken ID</label><input id="tekken_id" maxlength="40" placeholder="e.g. 5LrJB8LReLJB" autocomplete="off"><div class="hint">Find it in-game under your profile. Used to import your stats.</div></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Characters</legend>
+        <div class="frow"><label>Main character</label><select id="main_character"></select></div>
+        <div class="frow three">
+          <div><label>Secondary 1</label><select id="secondary_1"></select></div>
+          <div><label>Secondary 2</label><select id="secondary_2"></select></div>
+          <div><label>Secondary 3</label><select id="secondary_3"></select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Rank &amp; Style</legend>
+        <div class="frow two">
+          <div><label>Current rank</label><select id="current_rank"></select></div>
+          <div><label>Highest rank</label><select id="highest_rank"></select></div>
+        </div>
+        <div class="frow"><label>Playstyle</label><select id="playstyle">
+          <option value="">—</option><option value="rushdown">Rushdown</option><option value="defensive">Defensive</option>
+          <option value="counter_hit">Counter Hit</option><option value="poking">Poking</option>
+          <option value="keep_out">Keep Out</option><option value="aggressive">Aggressive</option><option value="movement">Movement</option>
+        </select></div>
+        <div class="frow two">
+          <div><label>Favorite stage</label><input id="favorite_stage" maxlength="40" placeholder="optional"></div>
+          <div><label>Favorite music</label><input id="favorite_music" maxlength="40" placeholder="optional"></div>
+        </div>
+      </fieldset>
+
+      <div class="save-row">
+        <button class="btn" id="saveBtn">Save profile</button>
+        <span class="save-msg" id="saveMsg"></span>
+      </div>
+    </div>
+
+    <div class="danger-zone">
+      <h3>Delete account</h3>
+      <p>This permanently removes your TEK-1 profile data. This can't be undone.</p>
+      <button class="btn btn-ghost" id="deleteBtn" style="border-color:var(--bad);color:var(--bad)">Delete my account</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>Accounts &amp; auth by Clerk. Your data is yours — delete it anytime.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./rank.html">Rank Guide</a></div>
+    <div class="fcol"><h4>Account</h4><a href="./dashboard.html">Dashboard</a><a href="./profile.html">Edit Profile</a></div>
+  </div>
+  <div class="fbar">TEKKEN® 8 © Bandai Namco. Not affiliated.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+const ROSTER=["Alisa","Anna","Armor King","Asuka","Azucena","Bob","Bryan","Claudio","Clive","Devil Jin","Dragunov","Eddy","Fahkumram","Feng","Heihachi","Hwoarang","Jack-8","Jin","Jun","Kazuya","King","Kuma","Kunimitsu","Lars","Law","Lee","Leo","Leroy","Lidia","Lili","Miary Zo","Nina","Panda","Paul","Raven","Reina","Shaheen","Steve","Victor","Xiaoyu","Yoshimitsu","Zafina"];
+const RANKS=["Beginner","1st Dan","2nd Dan","Fighter","Strategist","Combatant","Brawler","Ranger","Cavalry","Warrior","Assailant","Dominator","Vanquisher","Destroyer","Eliminator","Garyu","Shinryu","Tenryu","Mighty Ruler","Flame Ruler","Battle Ruler","Fujin","Raijin","Kishin","Bushin","Tekken King","Tekken Emperor","Tekken God","Tekken God Supreme","God of Destruction"];
+function toSlug(name){return String(name||"").toLowerCase().replace(/\s+/g,"-").replace(/[^\w-]/g,"");}
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const loading=document.getElementById("loading"),gate=document.getElementById("gate"),formWrap=document.getElementById("formWrap"),navAuth=document.getElementById("navAuth");
+
+function fillCharSelect(id,withBlank){const sel=document.getElementById(id);sel.innerHTML="";if(withBlank)sel.appendChild(new Option("—",""));ROSTER.forEach(n=>sel.appendChild(new Option(n,toSlug(n))));}
+function fillRankSelect(id){const sel=document.getElementById(id);sel.innerHTML="";sel.appendChild(new Option("—",""));RANKS.forEach(r=>sel.appendChild(new Option(r,r)));}
+
+(async function(){
+  let clerk;
+  try{ clerk = await TEK.initClerk(); }catch(e){ loading.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load sign-in. Check your Clerk key in tek-auth.js.</div>'; return; }
+  loading.style.display="none";
+  if(!TEK.isSignedIn()){ gate.style.display="block"; return; }
+
+  const ub=document.createElement("div"); navAuth.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"});
+
+  fillCharSelect("main_character",false);
+  ["secondary_1","secondary_2","secondary_3"].forEach(id=>fillCharSelect(id,true));
+  fillRankSelect("current_rank"); fillRankSelect("highest_rank");
+
+  formWrap.style.display="block";
+
+  // load existing
+  const { ok, data } = await TEK.api("/api/me/profile");
+  if(ok && data){
+    const u=data.user||{}, p=data.profile||{};
+    if(u.username) document.getElementById("username").value=u.username;
+    const setv=(id,v)=>{ if(v!=null) document.getElementById(id).value=v; };
+    setv("platform",p.platform); setv("country",p.country); setv("tekken_id",p.tekken_id);
+    setv("main_character",p.main_character||"lars");
+    setv("secondary_1",p.secondary_1); setv("secondary_2",p.secondary_2); setv("secondary_3",p.secondary_3);
+    setv("current_rank",p.current_rank); setv("highest_rank",p.highest_rank);
+    setv("playstyle",p.playstyle); setv("favorite_stage",p.favorite_stage); setv("favorite_music",p.favorite_music);
+  }
+
+  document.getElementById("saveBtn").addEventListener("click", async ()=>{
+    const msg=document.getElementById("saveMsg"); msg.textContent=""; msg.className="save-msg";
+    const btn=document.getElementById("saveBtn"); btn.disabled=true; btn.textContent="Saving…";
+    const body={
+      username:document.getElementById("username").value.trim(),
+      platform:document.getElementById("platform").value,
+      country:document.getElementById("country").value.trim(),
+      tekken_id:document.getElementById("tekken_id").value.trim(),
+      main_character:document.getElementById("main_character").value,
+      secondary_1:document.getElementById("secondary_1").value,
+      secondary_2:document.getElementById("secondary_2").value,
+      secondary_3:document.getElementById("secondary_3").value,
+      current_rank:document.getElementById("current_rank").value,
+      highest_rank:document.getElementById("highest_rank").value,
+      playstyle:document.getElementById("playstyle").value,
+      favorite_stage:document.getElementById("favorite_stage").value.trim(),
+      favorite_music:document.getElementById("favorite_music").value.trim(),
+      onboarded:1
+    };
+    const res=await TEK.api("/api/me/profile",{method:"POST",body:JSON.stringify(body)});
+    btn.disabled=false; btn.textContent="Save profile";
+    if(res.ok){ msg.textContent="✓ Saved! Your dashboard is updated."; msg.className="save-msg ok"; }
+    else { msg.textContent=(res.data&&res.data.error)?res.data.error:"Save failed."; msg.className="save-msg err"; }
+  });
+
+  document.getElementById("deleteBtn").addEventListener("click", async ()=>{
+    if(!confirm("Delete your TEK-1 account data permanently? This can't be undone.")) return;
+    const res=await TEK.api("/api/me/delete",{method:"POST"});
+    if(res.ok){
+      // also delete the Clerk identity, then sign out
+      try{ if(window.Clerk&&window.Clerk.user) await window.Clerk.user.delete(); }catch(e){}
+      alert("Your account has been deleted.");
+      window.location.href="/dashboard.html";
+    } else {
+      alert((res.data&&res.data.error)?res.data.error:"Delete failed.");
+    }
+  });
+})();
+</script>
+</body>
+</html>

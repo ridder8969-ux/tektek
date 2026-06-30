@@ -1,0 +1,14 @@
+# ============================================================
+#  Cloudflare Pages config — binds D1 to your Functions.
+#  After you create the D1 database (see SETUP), paste its
+#  database_id below. The binding name MUST be "DB" (the code
+#  reads env.DB).
+# ============================================================
+name = "tek-1"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tek1-db"
+database_id = "93c74af2-2089-450b-924c-e04beecc9bd8"

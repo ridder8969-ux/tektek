@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .auth-gate{max-width:460px;margin:80px auto;text-align:center}
+  .auth-gate h1{font-size:1.8rem;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+  .auth-gate p{color:var(--ink-dim);margin-bottom:24px}
+  #clerk-signin{display:flex;justify-content:center;margin-top:20px}
+  .loadingwrap{text-align:center;margin:80px auto;color:var(--ink-dim)}
+
+  .dash-head{display:flex;align-items:center;gap:18px;margin-bottom:24px;flex-wrap:wrap}
+  .dash-avatar{width:72px;height:72px;border-radius:50%;border:1px solid var(--line);object-fit:cover;background:var(--panel-2);flex:none}
+  .dash-head .greet .hi{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .dash-head .greet .sub{color:var(--ink-dim);margin-top:4px;font-size:.9rem}
+  .dash-head .head-actions{margin-left:auto;display:flex;gap:8px}
+
+  .dash-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .dcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .dcard .dl{font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+  .dcard .dv{font-size:1.5rem;font-weight:800;line-height:1.1}
+  .dcard .dv.small{font-size:1.05rem;font-weight:700}
+  .dcard.accentbar{border-left:3px solid var(--accent)}
+  .charline{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .charline img{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);flex:none}
+
+  .empty-cta{background:linear-gradient(140deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius-lg);padding:28px;text-align:center;margin-top:8px}
+  .empty-cta h3{font-size:1.2rem;font-weight:700;margin-bottom:6px}
+  .empty-cta p{color:var(--ink-dim);max-width:440px;margin:0 auto 16px}
+
+  .section-h{font-size:1.15rem;font-weight:700;margin:30px 0 12px;letter-spacing:-.01em}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink active" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
+</nav>
+
+<div class="wrap">
+  <!-- loading -->
+  <div class="loadingwrap" id="loading"><div class="spinner"></div>Loading…</div>
+
+  <!-- signed out -->
+  <div class="auth-gate" id="gate" style="display:none">
+    <div class="eyebrow" style="justify-content:center">TEK-1 · Your personal coach</div>
+    <h1>Sign in to TEK-1</h1>
+    <p>Create a free account to save your main, rank, and Tekken ID — and get a dashboard built around your game.</p>
+    <div id="clerk-signin"></div>
+  </div>
+
+  <!-- signed in -->
+  <div id="app" style="display:none"></div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>An unofficial Tekken 8 toolkit. Accounts &amp; auth by Clerk. Not affiliated with Bandai Namco.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./player.html">Player Lookup</a><a href="./rank.html">Rank Guide</a></div>
+    <div class="fcol"><h4>Account</h4><a href="./dashboard.html">Dashboard</a><a href="./profile.html">Edit Profile</a></div>
+  </div>
+  <div class="fbar">Built for the Tekken community. · TEKKEN® 8 © Bandai Namco. Not affiliated.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+const loading=document.getElementById("loading"),gate=document.getElementById("gate"),app=document.getElementById("app"),navAuth=document.getElementById("navAuth");
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}
+
+(async function(){
+  let clerk;
+  try{ clerk = await TEK.initClerk(); }
+  catch(e){ loading.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load sign-in. If you just set this up, check your Clerk publishable key in tek-auth.js.</div>'; return; }
+
+  loading.style.display="none";
+
+  if(!TEK.isSignedIn()){
+    gate.style.display="block";
+    clerk.mountSignIn(document.getElementById("clerk-signin"), { afterSignInUrl:"/dashboard.html", afterSignUpUrl:"/dashboard.html" });
+    navAuth.innerHTML='';
+    return;
+  }
+
+  // signed in — show user button in nav
+  const ub=document.createElement("div"); navAuth.appendChild(ub);
+  clerk.mountUserButton(ub, { afterSignOutUrl:"/dashboard.html" });
+
+  app.style.display="block";
+  app.innerHTML='<div class="loadingwrap"><div class="spinner"></div>Loading your profile…</div>';
+
+  const { ok, data } = await TEK.api("/api/me/profile");
+  if(!ok){ app.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load your profile. '+(data&&data.error?esc(data.error):"")+'</div>'; return; }
+
+  const u=data.user||{}, p=data.profile||{};
+  const cu=window.Clerk.user;
+  const displayName = u.username || (cu&&cu.firstName) || (cu&&cu.username) || "Player";
+  const avatar = (p&&p.avatar_url) || (cu&&cu.imageUrl) || "";
+
+  // onboarding if no main set
+  const needsOnboard = !p || !p.main_character;
+
+  let html='<div class="dash-head">';
+  html+= avatar ? '<img class="dash-avatar" src="'+esc(avatar)+'" alt="">' : TekAssets.initialBlock(displayName,72,"#4d9fff");
+  html+='<div class="greet"><div class="hi">Welcome back, '+esc(displayName)+'</div><div class="sub">'+(p&&p.current_rank?esc(p.current_rank):"Set up your profile to personalize your coaching")+'</div></div>';
+  html+='<div class="head-actions"><a class="btn btn-ghost" href="./profile.html">Edit profile</a></div>';
+  html+='</div>';
+
+  if(needsOnboard){
+    html+='<div class="empty-cta"><h3>Let\'s set up your game</h3><p>Tell us your main character, rank, and Tekken ID so your dashboard, matchups, and punishes are built around how <em>you</em> play.</p><a class="btn" href="./profile.html">Set up my profile →</a></div>';
+  } else {
+    // personalized cards
+    html+='<div class="dash-grid">';
+    html+=card("Current Rank", esc(p.current_rank||"—"));
+    if(p.highest_rank) html+=card("Highest Rank", esc(p.highest_rank), true);
+    html+=charCard("Main", p.main_character);
+    if(p.playstyle) html+=card("Playstyle", esc(pretty(p.playstyle)), true);
+    if(p.tekken_id) html+=card("Tekken ID", esc(p.tekken_id), true);
+    html+='</div>';
+
+    // secondaries
+    const secs=[p.secondary_1,p.secondary_2,p.secondary_3].filter(Boolean);
+    if(secs.length){
+      html+='<div class="section-h">Your Secondaries</div><div class="dash-grid">';
+      secs.forEach(s=>{ html+=charCard("Secondary", s); });
+      html+='</div>';
+    }
+
+    // quick links into the rest of the site, contextualized
+    html+='<div class="section-h">Jump back in</div><div class="dash-grid">';
+    html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./framedata.html?char='+esc(p.main_character)+'"><div class="dl">Frame Data</div><div class="dv small">'+esc(pretty(p.main_character))+'\'s moves →</div></a>';
+    html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./rank.html"><div class="dl">Rank Guide</div><div class="dv small">What to drill at '+esc(p.current_rank||"your rank")+' →</div></a>';
+    if(p.tekken_id) html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./player.html?id='+esc(p.tekken_id)+'"><div class="dl">Your Stats</div><div class="dv small">View match history →</div></a>';
+    html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./trainer.html"><div class="dl">Trainer</div><div class="dv small">Coaching &amp; matchups →</div></a>';
+    html+='</div>';
+
+    html+='<div class="callout info" style="margin-top:24px"><div class="co-title">Coming soon to your dashboard</div><p>Match-history import, an AI coach that spots your weak matchups, and personalized practice plans. This is Milestone 1 — your account &amp; profile foundation.</p></div>';
+  }
+
+  app.innerHTML=html;
+
+  function card(label,val,small){ return '<div class="dcard"><div class="dl">'+label+'</div><div class="dv'+(small?' small':'')+'">'+val+'</div></div>'; }
+  function charCard(label,slug){
+    if(!slug) return card(label,"—");
+    const img='<img src="'+TekAssets.charImg(slug)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(pretty(slug))+'\',34,\'#4d9fff\')">';
+    return '<div class="dcard"><div class="dl">'+label+'</div><div class="charline">'+img+'<span class="dv small">'+esc(pretty(slug))+'</span></div></div>';
+  }
+})();
+</script>
+</body>
+</html>
