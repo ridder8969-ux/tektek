@@ -32,6 +32,19 @@
   .empty-cta p{color:var(--ink-dim);max-width:440px;margin:0 auto 16px}
 
   .section-h{font-size:1.15rem;font-weight:700;margin:30px 0 12px;letter-spacing:-.01em}
+
+  .battles2{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .m-row{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line-soft)}
+  .m-row:last-child{border-bottom:none}
+  .m-row:hover{background:var(--panel-2)}
+  .m-res{font-weight:700;font-size:.78rem;width:46px;text-align:center;border-radius:6px;padding:4px 0}
+  .m-res.w{background:var(--good-soft);color:var(--good)} .m-res.l{background:var(--bad-soft);color:var(--bad)}
+  .m-oimg{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);object-fit:cover;flex:none}
+  .m-opp{font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-opp .m-sub{color:var(--ink-faint);font-size:.78rem}
+  .m-score{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--ink-dim)}
+  .m-when{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint)}
+  @media(max-width:560px){.m-row{grid-template-columns:auto auto 1fr auto}.m-when{display:none}}
 </style>
 </head>
 <body>
@@ -101,13 +114,7 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
   app.innerHTML='<div class="loadingwrap"><div class="spinner"></div>Loading your profile…</div>';
 
   const { ok, data } = await TEK.api("/api/me/profile");
-  if(!ok){
-    // TEMP: run auth diagnostic to show exactly why
-    let dbg="";
-    try{ const d=await TEK.api("/api/me/debug"); dbg='<pre style="text-align:left;background:#06090f;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px;overflow:auto;font-size:.72rem;color:var(--ink-dim)">'+esc(JSON.stringify(d.data,null,2))+'</pre>'; }catch(e){}
-    app.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load your profile. '+(data&&data.error?esc(data.error):"")+'</div>'+dbg;
-    return;
-  }
+  if(!ok){ app.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load your profile. '+(data&&data.error?esc(data.error):"")+'</div>'; return; }
 
   const u=data.user||{}, p=data.profile||{};
   const cu=window.Clerk.user;
@@ -151,16 +158,113 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
     html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./trainer.html"><div class="dl">Trainer</div><div class="dv small">Coaching &amp; matchups →</div></a>';
     html+='</div>';
 
-    html+='<div class="callout info" style="margin-top:24px"><div class="co-title">Coming soon to your dashboard</div><p>Match-history import, an AI coach that spots your weak matchups, and personalized practice plans. This is Milestone 1 — your account &amp; profile foundation.</p></div>';
+    html+='<div id="matchSection" style="margin-top:30px"></div>';
   }
 
   app.innerHTML=html;
+
+  // Load + render match history (and auto-sync if stale), only when onboarded
+  if(!needsOnboard && p.tekken_id){ initMatches(); }
+  else if(!needsOnboard && !p.tekken_id){
+    const ms=document.getElementById("matchSection");
+    if(ms) ms.innerHTML='<div class="callout info"><div class="co-title">Add your Tekken ID to unlock match history</div><p>Set your Tekken ID in your <a href="./profile.html" style="color:var(--accent);text-decoration:none">profile</a> and your recent matches, win rate, and matchup breakdown will appear here.</p></div>';
+  }
 
   function card(label,val,small){ return '<div class="dcard"><div class="dl">'+label+'</div><div class="dv'+(small?' small':'')+'">'+val+'</div></div>'; }
   function charCard(label,slug){
     if(!slug) return card(label,"—");
     const img='<img src="'+TekAssets.charImg(slug)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(pretty(slug))+'\',34,\'#4d9fff\')">';
     return '<div class="dcard"><div class="dl">'+label+'</div><div class="charline">'+img+'<span class="dv small">'+esc(pretty(slug))+'</span></div></div>';
+  }
+
+  async function initMatches(){
+    const ms=document.getElementById("matchSection");
+    ms.innerHTML='<div class="section-h">Your Matches</div><div class="loadingwrap" style="margin:20px auto"><div class="spinner"></div>Loading your matches…</div>';
+    // first load whatever we have
+    let res=await TEK.api("/api/me/matches");
+    let data=res.ok?res.data:null;
+    // auto-sync if we've never synced or it's stale (endpoint enforces the real interval)
+    const lastSync = data && data.summary ? data.summary.last_synced_at : null;
+    const stale = !lastSync || (Date.now()-new Date(lastSync+"Z").getTime())/60000 > 30;
+    if(stale){
+      await TEK.api("/api/me/sync",{method:"POST"});
+      res=await TEK.api("/api/me/matches"); data=res.ok?res.data:null;
+    }
+    renderMatches(data);
+  }
+
+  async function doSync(btn){
+    if(btn){ btn.disabled=true; btn.textContent="Syncing…"; }
+    const r=await TEK.api("/api/me/sync",{method:"POST",  });
+    let note="";
+    if(r.ok && r.data && r.data.skipped){ note="Synced recently — try again in ~"+(r.data.next_in_min||30)+" min."; }
+    else if(!r.ok){ note=(r.data&&r.data.error)?r.data.error:"Sync failed."; }
+    const res=await TEK.api("/api/me/matches");
+    renderMatches(res.ok?res.data:null, note);
+  }
+
+  function renderMatches(data, note){
+    const ms=document.getElementById("matchSection");
+    if(!data){ ms.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load matches.</div>'; return; }
+    const s=data.summary||{}, matches=data.matches||[], byOpp=data.by_opponent||[];
+    const wr = s.total ? Math.round((s.wins/s.total)*100) : null;
+
+    let h='<div class="section-h" style="display:flex;align-items:center;gap:12px">Your Matches <button class="btn btn-ghost" id="syncBtn" style="margin-left:auto;font-size:.8rem;padding:7px 14px">↻ Refresh</button></div>';
+    if(note) h+='<div class="callout info" style="margin-bottom:12px"><p>'+esc(note)+'</p></div>';
+
+    if(!matches.length){
+      h+='<div class="empty-cta"><h3>No matches yet</h3><p>Hit Refresh to import your recent battles from your Tekken ID.</p></div>';
+      ms.innerHTML=h;
+      const b=document.getElementById("syncBtn"); if(b) b.addEventListener("click",()=>doSync(b));
+      return;
+    }
+
+    // summary tiles
+    h+='<div class="dash-grid" style="margin-bottom:16px">';
+    if(wr!==null) h+='<div class="dcard accentbar"><div class="dl">Win Rate (tracked)</div><div class="dv">'+wr+'%</div></div>';
+    h+='<div class="dcard"><div class="dl">Record</div><div class="dv"><span style="color:var(--good)">'+(s.wins||0)+'W</span> <span style="color:var(--ink-faint)">/</span> <span style="color:var(--bad)">'+(s.losses||0)+'L</span></div></div>';
+    h+='<div class="dcard"><div class="dl">Matches Tracked</div><div class="dv">'+(s.total||0)+'</div></div>';
+    if(s.last_synced_at) h+='<div class="dcard"><div class="dl">Last Synced</div><div class="dv small">'+esc(timeAgo(s.last_synced_at))+'</div></div>';
+    h+='</div>';
+
+    // matchup breakdown (seed of the AI coach)
+    const meaningful = byOpp.filter(o=>o.games>=2).sort((a,b)=> (a.wins/a.games)-(b.wins/b.games));
+    if(meaningful.length){
+      const worst = meaningful.slice(0,3).filter(o=> (o.wins/o.games) < 0.5);
+      if(worst.length){
+        h+='<div class="callout warn" style="margin-bottom:16px"><div class="co-title">⚠ Matchups to work on</div><p>'+
+          worst.map(o=>'You\'re <strong>'+o.wins+'-'+o.losses+'</strong> vs <strong>'+esc(o.chr)+'</strong>').join(' · ')+
+          '. Study these in the <a href="./trainer.html" style="color:var(--accent);text-decoration:none">trainer</a> and <a href="./framedata.html" style="color:var(--accent);text-decoration:none">frame data</a>.</p></div>';
+      }
+    }
+
+    // recent battles list
+    h+='<div class="battles2">';
+    matches.forEach(m=>{
+      const win=m.result==="win";
+      const oppSlug=String(m.opponent_char||"").toLowerCase().replace(/\s+/g,"-");
+      const oimg = m.opponent_char ? '<img class="m-oimg" src="'+TekAssets.charImg(oppSlug)+'" alt="" onerror="this.style.display=\'none\'">' : '';
+      h+='<div class="m-row"><span class="m-res '+(win?"w":"l")+'">'+(win?"WIN":"LOSS")+'</span>'+
+         oimg+'<span class="m-opp">'+esc(m.opponent_name||"Opponent")+(m.opponent_char?'<span class="m-sub"> · '+esc(m.opponent_char)+(m.opponent_rank?' · '+esc(m.opponent_rank):'')+'</span>':'')+'</span>'+
+         '<span class="m-score">'+(m.rounds_won!=null?m.rounds_won:"-")+'–'+(m.rounds_lost!=null?m.rounds_lost:"-")+'</span>'+
+         '<span class="m-when">'+esc(timeAgo(m.played_at))+'</span></div>';
+    });
+    h+='</div>';
+
+    ms.innerHTML=h;
+    const b=document.getElementById("syncBtn"); if(b) b.addEventListener("click",()=>doSync(b));
+  }
+
+  function timeAgo(iso){
+    if(!iso) return "";
+    const t=new Date((iso.includes("T")?iso:iso.replace(" ","T"))+(iso.endsWith("Z")?"":"Z")).getTime();
+    if(isNaN(t)) return iso;
+    const s=(Date.now()-t)/1000;
+    if(s<60) return "just now";
+    if(s<3600) return Math.floor(s/60)+"m ago";
+    if(s<86400) return Math.floor(s/3600)+"h ago";
+    if(s<2592000) return Math.floor(s/86400)+"d ago";
+    return new Date(t).toLocaleDateString();
   }
 })();
 </script>

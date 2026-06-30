@@ -8,7 +8,7 @@
 window.TEK = window.TEK || {};
 
 // >>> PASTE YOUR CLERK PUBLISHABLE KEY HERE (starts with pk_) <<<
-TEK.CLERK_PUBLISHABLE_KEY = "pk_test_Y3V0ZS1oZXJtaXQtOS5jbGVyay5hY2NvdW50cy5kZXYk";
+TEK.CLERK_PUBLISHABLE_KEY = "pk_test_REPLACE_ME";
 
 // Load Clerk's script, init, and resolve when ready.
 TEK.initClerk = async function(){
