@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matchup & Punishment — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .pickers{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:22px 0}
+  .picker{flex:1;min-width:180px}
+  .picker label{display:block;font-size:.78rem;font-weight:600;color:var(--ink-dim);margin-bottom:6px}
+  .picker select{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:.95rem;padding:12px 14px;border-radius:var(--radius-sm);outline:none;cursor:pointer}
+  .picker select:focus{border-color:var(--accent)}
+  .vs{font-weight:800;color:var(--ink-faint);padding-bottom:12px}
+
+  .mu-head{display:flex;align-items:center;gap:14px;margin:8px 0 20px;flex-wrap:wrap}
+  .mu-head .face{display:flex;align-items:center;gap:10px}
+  .mu-head img{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);flex:none}
+  .mu-head .nm{font-weight:700;font-size:1.05rem}
+  .mu-head .vsbig{font-weight:800;color:var(--accent);font-size:1.1rem}
+
+  .grid2{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:780px){.grid2{grid-template-columns:1fr}}
+  .panel-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel-card h3{font-size:1.05rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .panel-card .sub{color:var(--ink-faint);font-size:.8rem;margin-bottom:14px}
+
+  .pun-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .pun-row:last-child{border-bottom:none}
+  .pun-when{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent);width:56px;flex:none;font-weight:600}
+  .pun-cmd{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.9rem}
+  .pun-cmd .pn{color:var(--ink-faint);font-weight:400;font-size:.72rem;font-family:'Inter',sans-serif;margin-left:6px}
+  .pun-meta{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-dim);text-align:right}
+
+  .scout-list{display:flex;flex-direction:column;gap:0}
+  .scout-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+  .scout-row:last-child{border-bottom:none}
+  .scout-cmd{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.84rem}
+  .scout-cmd .sn{color:var(--ink-faint);font-weight:400;font-size:.7rem;font-family:'Inter',sans-serif;display:block;margin-top:1px}
+  .scout-lvl{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-dim)}
+  .scout-blk{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600}
+  .scout-blk.bad{color:var(--bad)} .scout-blk.warn{color:var(--warn)} .scout-blk.low{color:var(--bad)}
+
+  .scout-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .scout-tab{font-family:'JetBrains Mono',monospace;font-size:.72rem;background:var(--bg2);border:1px solid var(--line);color:var(--ink-dim);padding:6px 11px;border-radius:7px;cursor:pointer}
+  .scout-tab.on{background:var(--accent);color:#06101c;border-color:var(--accent);font-weight:600}
+
+  .state{text-align:center;margin:40px auto;color:var(--ink-dim)}
+  .errbox{background:var(--bad-soft);border:1px solid rgba(240,102,75,0.4);border-radius:10px;padding:16px 18px;color:#f6c9bd;max-width:560px;margin:24px auto}
+  .deep-strat{background:var(--accent-soft);border:1px solid rgba(77,159,255,0.25);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+  .deep-strat .co-title{color:var(--accent);font-weight:700;margin-bottom:6px}
+  .deep-strat a{color:var(--accent);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Matchup &amp; Punishment Tools</div>
+  <h1 class="page">Matchup Lab</h1>
+  <p class="lead">Pick your character and who you're fighting. Get <strong>your real punishers</strong> (computed from frame data) and a <strong>scouting report</strong> on what to watch for — what you can launch, their lows, homing moves, and power crushes.</p>
+
+  <div class="pickers">
+    <div class="picker"><label>Your character</label><select id="meSel"></select></div>
+    <div class="vs">vs</div>
+    <div class="picker"><label>Opponent</label><select id="oppSel"></select></div>
+    <button class="btn" id="goBtn" style="margin-bottom:0">Analyze</button>
+  </div>
+
+  <div class="state" id="loading" style="display:none"><div class="spinner"></div>Crunching frame data…</div>
+  <div id="errSlot"></div>
+  <div id="result" style="display:none"></div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>Punishers &amp; scouting computed live from TekkenDocs frame data.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./matchup.html">Matchups</a><a href="./rank.html">Rank Guide</a></div>
+    <div class="fcol"><h4>Sources</h4><a href="https://tekkendocs.com" target="_blank" rel="noopener">TekkenDocs</a><a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a></div>
+  </div>
+  <div class="fbar">Frame data from tekkendocs.com &amp; rbnorway.org. · Built for RIDD &amp; crew.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script>
+const ROSTER=[["alisa","Alisa"],["anna","Anna"],["armor-king","Armor King"],["asuka","Asuka"],["azucena","Azucena"],["bob","Bob"],["bryan","Bryan"],["claudio","Claudio"],["clive","Clive"],["devil-jin","Devil Jin"],["dragunov","Dragunov"],["eddy","Eddy"],["fahkumram","Fahkumram"],["feng","Feng"],["heihachi","Heihachi"],["hwoarang","Hwoarang"],["jack-8","Jack-8"],["jin","Jin"],["jun","Jun"],["kazuya","Kazuya"],["king","King"],["kuma","Kuma"],["kunimitsu","Kunimitsu"],["lars","Lars"],["law","Law"],["lee","Lee"],["leo","Leo"],["leroy","Leroy"],["lidia","Lidia"],["lili","Lili"],["miary","Miary Zo"],["nina","Nina"],["panda","Panda"],["paul","Paul"],["raven","Raven"],["reina","Reina"],["shaheen","Shaheen"],["steve","Steve"],["victor","Victor"],["xiaoyu","Xiaoyu"],["yoshimitsu","Yoshimitsu"],["zafina","Zafina"]];
+// hand-written deep matchups that exist in the trainer (Lars perspective)
+const DEEP_MATCHUPS={ "lars":{"bryan":1,"dragunov":1,"jin":1,"devil-jin":1,"king":1,"armor-king":1,"eddy":1,"hwoarang":1} };
+
+const meSel=document.getElementById("meSel"),oppSel=document.getElementById("oppSel"),goBtn=document.getElementById("goBtn"),loading=document.getElementById("loading"),errSlot=document.getElementById("errSlot"),result=document.getElementById("result");
+ROSTER.forEach(([s,n])=>{ meSel.appendChild(new Option(n,s)); oppSel.appendChild(new Option(n,s)); });
+meSel.value="lars"; oppSel.value="king";
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function name(slug){const f=ROSTER.find(r=>r[0]===slug);return f?f[1]:slug;}
+function blkClass(b){const n=parseInt(String(b).match(/-?\d+/)?String(b).match(/-?\d+/)[0]:"",10);if(isNaN(n))return "";if(n<=-15)return "bad";if(n<=-10)return "warn";return "";}
+
+let scoutData=null, activeScout="launchable";
+
+async function analyze(){
+  const me=meSel.value, opp=oppSel.value;
+  errSlot.innerHTML=""; result.style.display="none"; loading.style.display="block";
+  try{
+    const r=await fetch("/api/matchup?me="+encodeURIComponent(me)+"&opp="+encodeURIComponent(opp));
+    const d=await r.json(); loading.style.display="none";
+    if(!r.ok||d.error){ errSlot.innerHTML='<div class="errbox">'+esc(d.error||"Couldn\'t analyze.")+'</div>'; return; }
+    render(me,opp,d);
+  }catch(e){ loading.style.display="none"; errSlot.innerHTML='<div class="errbox">Couldn\'t reach the analyzer. (Deployed site only.)</div>'; }
+}
+
+function render(me,opp,d){
+  scoutData=d.opp_scouting||{}; activeScout="launchable";
+  const meImg='<img src="'+TekAssets.charImg(me)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(name(me))+'\',48,\'#4d9fff\')">';
+  const oppImg='<img src="'+TekAssets.charImg(opp)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(name(opp))+'\',48,\'#4d9fff\')">';
+
+  let h='<div class="mu-head"><div class="face">'+meImg+'<span class="nm">'+esc(name(me))+'</span></div><span class="vsbig">vs</span><div class="face">'+oppImg+'<span class="nm">'+esc(name(opp))+'</span></div></div>';
+
+  // deep strategy callout if it exists
+  if(DEEP_MATCHUPS[me] && DEEP_MATCHUPS[me][opp]){
+    h+='<div class="deep-strat"><div class="co-title">📖 Deep strategy available</div><p>There\'s a full researched game plan for '+esc(name(me))+' vs '+esc(name(opp))+' — threats, punishes, and what to say mid-match — in the <a href="./trainer.html#matchups">Trainer → Matchups</a>.</p></div>';
+  }
+
+  h+='<div class="grid2">';
+  // YOUR punishers
+  const p=d.my_punishers||{};
+  h+='<div class="panel-card"><h3>⚡ Your Punishers</h3><div class="sub">'+esc(name(me))+'\'s fastest answers — block their move, then punish.</div>';
+  h+=punRow("i10","After −10",p.i10);
+  h+=punRow("i12","After −12",p.i12);
+  h+=punRow("i13","After −13",p.i13);
+  h+=punRow("i14","After −14",p.i14);
+  h+=punRow("i15","Launch −15+",p.i15_launch);
+  h+=punRow("WS","While rising",p.while_standing);
+  h+='</div>';
+
+  // OPPONENT scouting
+  h+='<div class="panel-card"><h3>🔍 Scouting: '+esc(name(opp))+'</h3><div class="sub">What to watch for, from their movelist.</div>';
+  h+='<div class="scout-tabs" id="scoutTabs">'+
+     scoutTab("launchable","Launch-punishable",scoutData.launchable)+
+     scoutTab("punishable","Punishable",scoutData.punishable)+
+     scoutTab("lows","Lows",scoutData.lows)+
+     scoutTab("homing","Homing",scoutData.homing)+
+     scoutTab("powercrush","Power Crush",scoutData.powercrush)+
+     scoutTab("fastMids","Fast mids",scoutData.fastMids)+
+     '</div><div id="scoutList"></div></div>';
+
+  h+='</div>';
+  result.innerHTML=h; result.style.display="block";
+  document.querySelectorAll(".scout-tab").forEach(t=>t.addEventListener("click",()=>{activeScout=t.dataset.k;updateScoutUI();renderScout();}));
+  renderScout();
+}
+
+function punRow(when,label,m){
+  if(!m) return '<div class="pun-row"><span class="pun-when">'+when+'</span><span class="pun-cmd" style="color:var(--ink-faint)">—</span><span class="pun-meta">'+label+'</span></div>';
+  return '<div class="pun-row"><span class="pun-when">'+when+'</span><span class="pun-cmd">'+esc(m.command)+(m.name?'<span class="pn">'+esc(m.name)+'</span>':'')+'</span><span class="pun-meta">'+esc(m.damage||"")+(m.hit?' · '+esc(m.hit):'')+'</span></div>';
+}
+function scoutTab(k,label,arr){const n=(arr||[]).length;return '<span class="scout-tab'+(k==="launchable"?" on":"")+'" data-k="'+k+'">'+label+' ('+n+')</span>';}
+function updateScoutUI(){document.querySelectorAll(".scout-tab").forEach(t=>t.classList.toggle("on",t.dataset.k===activeScout));}
+function renderScout(){
+  const list=document.getElementById("scoutList"); const arr=(scoutData&&scoutData[activeScout])||[];
+  if(!arr.length){ list.innerHTML='<div class="state" style="margin:20px auto">Nothing notable here.</div>'; return; }
+  const isLow=(activeScout==="lows");
+  let h='<div class="scout-list">';
+  arr.forEach(m=>{
+    h+='<div class="scout-row"><span class="scout-cmd">'+esc(m.command)+(m.name?'<span class="sn">'+esc(m.name)+'</span>':'')+'</span>'+
+       '<span class="scout-lvl">'+esc(m.hitLevel||"")+(m.startup?' · '+esc(m.startup):'')+'</span>'+
+       '<span class="scout-blk '+(isLow?"low":blkClass(m.block))+'">'+esc(m.block||"")+'</span></div>';
+  });
+  h+='</div>';
+  list.innerHTML=h;
+}
+
+goBtn.addEventListener("click",analyze);
+// preset from URL or profile main
+(async function(){
+  const params=new URLSearchParams(location.search);
+  if(params.get("me")) meSel.value=params.get("me");
+  if(params.get("opp")) oppSel.value=params.get("opp");
+  analyze();
+})();
+</script>
+</body>
+</html>

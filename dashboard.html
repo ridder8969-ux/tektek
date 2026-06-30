@@ -53,6 +53,7 @@
   <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
   <a class="navlink" href="./trainer.html">Trainer</a>
   <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
   <a class="navlink" href="./player.html">Player Lookup</a>
   <a class="navlink" href="./rank.html">Rank Guide</a>
   <a class="navlink active" href="./dashboard.html">Dashboard</a>
@@ -233,8 +234,8 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
       const worst = meaningful.slice(0,3).filter(o=> (o.wins/o.games) < 0.5);
       if(worst.length){
         h+='<div class="callout warn" style="margin-bottom:16px"><div class="co-title">⚠ Matchups to work on</div><p>'+
-          worst.map(o=>'You\'re <strong>'+o.wins+'-'+o.losses+'</strong> vs <strong>'+esc(o.chr)+'</strong>').join(' · ')+
-          '. Study these in the <a href="./trainer.html" style="color:var(--accent);text-decoration:none">trainer</a> and <a href="./framedata.html" style="color:var(--accent);text-decoration:none">frame data</a>.</p></div>';
+          worst.map(o=>'You\'re <strong>'+o.wins+'-'+o.losses+'</strong> vs <a href="./matchup.html?me='+esc((p.main_character||"lars"))+'&opp='+esc(String(o.chr).toLowerCase().replace(/\s+/g,"-"))+'" style="color:var(--accent);text-decoration:none"><strong>'+esc(o.chr)+'</strong></a>').join(' · ')+
+          '. Tap one to see your punishers and a scouting report.</p></div>';
       }
     }
 
