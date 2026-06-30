@@ -16,6 +16,8 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
   const raw = (url.searchParams.get("char") || "").trim().toLowerCase();
+  const noCache = url.searchParams.get("nocache") === "1";
+  const debug = url.searchParams.get("debug") === "1";
   if (!raw) return json({ error: "Missing character. Add ?char=lars" }, 400, cors);
   if (!/^[a-z0-9_.\- ]{2,30}$/.test(raw)) return json({ error: "Invalid character name." }, 400, cors);
 
@@ -31,31 +33,37 @@ export async function onRequest(context) {
   ].filter(Boolean));
 
   const cache = caches.default;
-  const cacheKey = new Request("https://fd-cache-v5/" + base, request);
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  // Clean, self-contained cache key (does NOT inherit the original request URL/query).
+  // Bumped to v6 to flush any poisoned earlier entries (e.g. a stale Lars result).
+  const cacheKey = new Request("https://fd-cache.internal/v6/" + encodeURIComponent(base));
+  if (!noCache) {
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+  }
 
+  const tried = [];
   for (const slug of candidates) {
     for (const tmpl of ["https://tekkendocs.com/api/t8/{c}/framedata", "https://tekkendocs.com/t8/{c}/framedata"]) {
       const src = tmpl.replace("{c}", encodeURIComponent(slug));
       try {
         const res = await fetch(src, { headers: { "Accept": "application/json", "User-Agent": "tek-trainer/1.0" } });
+        tried.push(src + " -> " + res.status);
         if (!res.ok) continue;
         const text = await res.text();
         let data;
-        try { data = JSON.parse(text); } catch { continue; }
+        try { data = JSON.parse(text); } catch { tried.push("  (not JSON)"); continue; }
 
         let rows = [];
         if (Array.isArray(data.framesNormal)) rows = data.framesNormal;
         else if (Array.isArray(data.frames)) rows = data.frames;
         else if (Array.isArray(data.framedata)) rows = data.framedata;
         else if (Array.isArray(data.moves)) rows = data.moves;
-        if (rows.length === 0) continue;
+        if (rows.length === 0) { tried.push("  (topKeys: " + Object.keys(data).join(",") + ")"); continue; }
 
         const moves = rows.map(mapMove).filter(m => m.command);
         if (moves.length === 0) continue;
 
-        const out = json({
+        const payload = {
           character: data.characterName || slug,
           requested: raw,
           resolvedSlug: slug,
@@ -64,14 +72,19 @@ export async function onRequest(context) {
           moves,
           stances: Array.isArray(data.stances) ? data.stances : [],
           fetched_at: new Date().toISOString(),
-        }, 200, cors);
-        out.headers.set("Cache-Control", "public, max-age=86400");
-        waitUntil(cache.put(cacheKey, out.clone()));
+        };
+        if (debug) payload.debug = { tried, rowCount: rows.length, source: src };
+        const out = json(payload, 200, cors);
+        // Only cache real successes, and only when not debugging.
+        if (!debug) {
+          out.headers.set("Cache-Control", "public, max-age=86400");
+          waitUntil(cache.put(cacheKey, out.clone()));
+        }
         return out;
-      } catch {}
+      } catch (e) { tried.push(src + " -> threw"); }
     }
   }
-  return json({ error: 'Couldn\'t load frame data for "' + raw + '". Tried: ' + candidates.join(", ") }, 502, cors);
+  return json({ error: 'Couldn\'t load frame data for "' + raw + '". Tried: ' + candidates.join(", "), tried }, 502, cors);
 }
 
 // Known slug corrections (input -> TekkenDocs slug)
