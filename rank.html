@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rank Guide — Lightning Trainer</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .rank-select-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:24px 0 8px}
+  .rank-select{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:1rem;padding:12px 16px;border-radius:9px;outline:none;cursor:pointer;min-width:220px}
+  .rank-select:focus{border-color:var(--accent)}
+  .rank-select optgroup{color:var(--ink-faint);font-style:normal}
+
+  /* belt ladder */
+  .ladder{display:flex;flex-direction:column;gap:2px;margin:22px 0}
+  .belt-group{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .belt-head{display:flex;align-items:center;gap:10px;padding:10px 16px;font-weight:700;font-size:.95rem;border-left:4px solid}
+  .belt-ranks{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+  .belt-rank{font-family:'JetBrains Mono',monospace;font-size:.78rem;padding:5px 10px;border-radius:6px;background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);cursor:pointer;transition:all .12s}
+  .belt-rank:hover{color:var(--ink);border-color:var(--accent-dim)}
+  .belt-rank.you{background:var(--accent);color:#0a0d12;border-color:var(--accent);font-weight:700}
+
+  /* coaching panel */
+  .coach{margin-top:8px;display:none}
+  .coach.show{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .coach-head{background:linear-gradient(150deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px;border-left:4px solid var(--accent)}
+  .coach-head .tier-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .coach-head h2{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
+  .coach-head .goal{color:var(--ink-dim);margin-top:8px;font-size:.96rem}
+  .coach-head .goal strong{color:var(--ink)}
+
+  .focus-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:16px}
+  .focus{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .focus .fnum{width:26px;height:26px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;margin-bottom:8px}
+  .focus h4{font-size:1rem;font-weight:700;margin-bottom:4px}
+  .focus p{color:var(--ink-dim);font-size:.86rem;line-height:1.5}
+
+  .pop-note{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-faint);margin-top:4px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot"></span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink" href="./resources.html">Resources</a>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Know where you stand · Know what to fix</div>
+  <h1 class="page">Rank Guide</h1>
+  <p class="lead">Pick your current rank and get a focused plan for <strong>your</strong> tier — what's beating players at your level, and exactly what to drill to climb out. The ladder below shows every rank by color division.</p>
+
+  <div class="rank-select-row">
+    <select class="rank-select" id="rankSelect" aria-label="Choose your rank">
+      <option value="">— Select your rank —</option>
+    </select>
+  </div>
+
+  <div class="coach" id="coach"></div>
+
+  <h3 style="font-size:1.2rem;font-weight:700;margin:34px 0 6px">The full ladder</h3>
+  <p class="pop-note" style="margin-bottom:14px">Tap any rank to see its coaching. The blue ranks hold ~25% of players and are the big wall.</p>
+  <div class="ladder" id="ladder"></div>
+</div>
+
+<footer class="site">
+  Rank data &amp; distribution reflect Tekken 8 Season 3. Coaching priorities synthesized from community guides.<br>Built for RIDD &amp; crew.
+</footer>
+
+<script>
+// ---- rank ladder by color belt ----
+const BELTS = [
+  { name:"Beginner", color:"#8a939f", ranks:["Beginner","1st Dan","2nd Dan"] },
+  { name:"Green", color:"#4ec77f", ranks:["Fighter","Strategist","Combatant"] },
+  { name:"Green (high)", color:"#3fa86a", ranks:["Brawler","Ranger","Cavalry"] },
+  { name:"Yellow", color:"#e3b341", ranks:["Warrior","Assailant","Dominator"] },
+  { name:"Orange", color:"#e8893a", ranks:["Vanquisher","Destroyer","Eliminator"] },
+  { name:"Red", color:"#d8504a", ranks:["Garyu","Shinryu","Tenryu"] },
+  { name:"Purple", color:"#a96fd6", ranks:["Mighty Ruler","Flame Ruler","Battle Ruler"] },
+  { name:"Blue", color:"#4d9fff", ranks:["Fujin","Raijin","Kishin","Bushin"] },
+  { name:"Gold", color:"#d4a82a", ranks:["Tekken King","Tekken Emperor","Tekken God","Tekken God Supreme"] },
+  { name:"Crimson (God of Destruction)", color:"#e0398a", ranks:["God of Destruction","God of Destruction I","God of Destruction II","God of Destruction III+"] },
+];
+
+// ---- coaching keyed by tier group ----
+// each rank maps to one of these plans
+const PLANS = {
+  beginner: {
+    tier:"Beginner / Green ranks", color:"#4ec77f",
+    goal:"Build pure fundamentals. <strong>No points are lost here</strong>, so you can experiment freely — but the habits you build now decide how fast you climb later.",
+    focus:[
+      {t:"Learn to block",d:"Hold back for mids/highs, down-back for lows. Just blocking and not panicking beats most players at this level."},
+      {t:"One combo, not ten",d:"Get a single bread-and-butter combo consistent off your launcher. Don't chase optimal damage yet."},
+      {t:"Stop mashing",d:"The #1 fix. When it's not your turn, do nothing. Pressing buttons into block is how you lose rounds here."},
+      {t:"Learn your launcher",d:"Know the one move that launches for a full combo when you block something very unsafe (for Lars: F1+2)."},
+    ],
+  },
+  yellowred: {
+    tier:"Yellow / Orange / Red ranks", color:"#e3b341",
+    goal:"This is where <strong>points start to matter</strong> (you can be demoted) and where knowledge-check moves appear. Players here know a few combos but lack fundamentals. Out-discipline them.",
+    focus:[
+      {t:"Punish unsafe moves",d:"Learn your 10f / 12f / 15f punishers. When you block something minus, hit back with the right punish. This alone climbs you several ranks."},
+      {t:"Beat scrub-killers",d:"Learn to block and launch the big lows (snake edges) and unsafe launchers people spam. Use replay takeover to study what keeps catching you."},
+      {t:"Block low more",d:"Most damage at this level comes from lows you didn't block. When unsure, block low and react to the mid."},
+      {t:"Boring wins = rank ups",d:"Don't freestyle. Stick to safe pokes and clean punishes. Consistency beats flash here."},
+    ],
+  },
+  purple: {
+    tier:"Purple ranks (Mighty Ruler+)", color:"#a96fd6",
+    goal:"You're now <strong>officially above average</strong> — Mighty Ruler is the 50th percentile. Players here have real fundamentals. You climb by stopping autopilot and reading the actual person.",
+    focus:[
+      {t:"Read the player",d:"Stop running the same flowchart. Notice habits — do they mash after blocking? duck a lot? — and adapt your offense to punish THAT player."},
+      {t:"Maximize punishes",d:"Take the full launch punish, not the safe poke. Rounds here are decided by who cashes out openings the hardest."},
+      {t:"Tighten defense",d:"Learn to step (sidestep), fuzzy guard, and break throws consistently. Your defense is now the bottleneck."},
+      {t:"Matchup knowledge",d:"Start learning what specific characters do — their key unsafe moves and gaps. Use the Matchups in the trainer."},
+    ],
+  },
+  blue: {
+    tier:"Blue ranks (Fujin–Bushin)", color:"#4d9fff",
+    goal:"The big wall — <strong>~25% of all players are stuck here</strong>. Execution and matchup gaps get exposed. This is a grind; expect it to take a while.",
+    focus:[
+      {t:"Clean execution",d:"Drop fewer combos, hit your optimal punishes every time. Under pressure, consistency separates blue from gold."},
+      {t:"Deep matchup knowledge",d:"Know the dangerous moves and gaps of the whole cast, not just your problem characters. Lab specific strings."},
+      {t:"Movement & spacing",d:"Korean backdash, sidestep, whiff punishing become mandatory. Control space instead of trading."},
+      {t:"Mental game",d:"Manage tilt and ranked fatigue — the final boss here is your own consistency over a session, not any one opponent."},
+    ],
+  },
+  gold: {
+    tier:"Gold / God ranks", color:"#d4a82a",
+    goal:"Elite territory — <strong>top ~10% and beyond</strong>. Gameplay is near-instinctive. Almost no room for gimmicks. At this point, consider entering local tournaments.",
+    focus:[
+      {t:"Flawless punishment",d:"Every opening must become maximum guaranteed damage. Mistakes are punished perfectly at this level."},
+      {t:"Consistency over sessions",d:"Win rate over long sets matters more than any single match. Composure and stamina are skills."},
+      {t:"Frame-perfect defense",d:"Reactions, fuzzy guarding, and option selects need to be sharp. You're punished for any defensive lapse."},
+      {t:"Study top players",d:"Watch high-level replays and tournament play for your character. Steal setups and refine your gameplan."},
+    ],
+  },
+};
+
+// map each rank name to a plan key
+function planFor(rank){
+  const greens = ["Beginner","1st Dan","2nd Dan","Fighter","Strategist","Combatant","Brawler","Ranger","Cavalry"];
+  const yellowred = ["Warrior","Assailant","Dominator","Vanquisher","Destroyer","Eliminator","Garyu","Shinryu","Tenryu"];
+  const purple = ["Mighty Ruler","Flame Ruler","Battle Ruler"];
+  const blue = ["Fujin","Raijin","Kishin","Bushin"];
+  if(greens.includes(rank)) return "beginner";
+  if(yellowred.includes(rank)) return "yellowred";
+  if(purple.includes(rank)) return "purple";
+  if(blue.includes(rank)) return "blue";
+  return "gold";
+}
+
+const rankSelect=document.getElementById("rankSelect");
+const ladder=document.getElementById("ladder");
+const coach=document.getElementById("coach");
+
+// build dropdown grouped by belt + the ladder
+BELTS.forEach(belt=>{
+  const og=document.createElement("optgroup"); og.label=belt.name;
+  belt.ranks.forEach(r=>{ const o=document.createElement("option"); o.value=r; o.textContent=r; og.appendChild(o); });
+  rankSelect.appendChild(og);
+
+  const group=document.createElement("div"); group.className="belt-group";
+  const head=document.createElement("div"); head.className="belt-head"; head.style.borderLeftColor=belt.color;
+  head.innerHTML='<span style="width:10px;height:10px;border-radius:3px;background:'+belt.color+';display:inline-block"></span>'+belt.name;
+  const ranksWrap=document.createElement("div"); ranksWrap.className="belt-ranks";
+  belt.ranks.forEach(r=>{
+    const chip=document.createElement("span"); chip.className="belt-rank"; chip.textContent=r; chip.dataset.rank=r;
+    chip.addEventListener("click",()=>{ rankSelect.value=r; showCoach(r); });
+    ranksWrap.appendChild(chip);
+  });
+  group.appendChild(head); group.appendChild(ranksWrap); ladder.appendChild(group);
+});
+
+function showCoach(rank){
+  if(!rank){ coach.classList.remove("show"); return; }
+  const plan=PLANS[planFor(rank)];
+  // highlight in ladder
+  document.querySelectorAll(".belt-rank").forEach(c=>c.classList.toggle("you", c.dataset.rank===rank));
+
+  let html='<div class="coach-head" style="border-left-color:'+plan.color+'">'+
+    '<div class="tier-label">Your tier: '+plan.tier+'</div>'+
+    '<h2>You\'re at '+rank+'</h2>'+
+    '<div class="goal">'+plan.goal+'</div></div>';
+  html+='<h3 style="font-size:1.15rem;font-weight:700;margin:6px 0 12px">What to work on right now</h3>';
+  html+='<div class="focus-grid">';
+  plan.focus.forEach((f,i)=>{
+    html+='<div class="focus"><span class="fnum">'+(i+1)+'</span><h4>'+f.t+'</h4><p>'+f.d+'</p></div>';
+  });
+  html+='</div>';
+  html+='<div class="callout info"><div class="co-title">Next step</div><p>Open the <a href="./trainer.html" style="color:var(--accent);text-decoration:none">Trainer</a> to drill these, check the <a href="./framedata.html" style="color:var(--accent);text-decoration:none">Frame Data</a> for unsafe moves to punish, and study your problem characters in the Matchups section.</p></div>';
+
+  coach.innerHTML=html; coach.classList.add("show");
+  coach.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+rankSelect.addEventListener("change",()=>showCoach(rankSelect.value));
+</script>
+</body>
+</html>

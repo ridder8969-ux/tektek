@@ -18,7 +18,7 @@ export async function onRequest(context) {
   if (!/^[a-z0-9_-]{2,30}$/.test(char)) return json({ error: "Invalid character name." }, 400, cors);
 
   const cache = caches.default;
-  const cacheKey = new Request("https://fd-cache-v3/" + char, request);
+  const cacheKey = new Request("https://fd-cache-v4/" + char, request);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
