@@ -17,7 +17,7 @@
   .explainer .simple b{color:var(--ink)}
 
   .char-head{display:flex;align-items:center;gap:16px;margin:8px 0 18px}
-  .char-portrait{width:56px;height:56px;border-radius:12px;object-fit:cover;border:1px solid var(--line);background:var(--panel-2);flex:none}
+  .char-portrait{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:var(--panel-2);flex:none}
   .char-head .ch-meta .ch-name{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;line-height:1}
   .char-head .ch-meta .ch-sub{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin-top:3px}
 
@@ -193,17 +193,23 @@ function setPortrait(slug,name){
   currentName=name;
   charHead.style.display="flex";
   chName.textContent=name;
+  // clear any previous fallback when switching
+  const oldFb=charHead.querySelector(".img-fallback"); if(oldFb) oldFb.remove();
   charPortrait.style.display="block";
-  charPortrait.src=TekAssets.charImg(slug);
+  charPortrait.dataset.triedDirect="";
+  charPortrait.src=TekAssets.charImg(slug,96);
   charPortrait.onerror=function(){
-    // replace broken img with a colored initial block
+    // first failure: try the direct (non-proxy) URL; second failure: letter block
+    if(!charPortrait.dataset.triedDirect){
+      charPortrait.dataset.triedDirect="1";
+      charPortrait.src=TekAssets.charImgDirect(slug);
+      return;
+    }
     charPortrait.style.display="none";
     if(!charHead.querySelector(".img-fallback")){
       charHead.insertAdjacentHTML("afterbegin",TekAssets.initialBlock(name,56,"#4d9fff"));
     }
   };
-  // clear any previous fallback when switching
-  const fb=charHead.querySelector(".img-fallback"); if(fb) fb.remove();
 }
 
 async function loadChar(slug){
