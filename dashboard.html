@@ -33,6 +33,17 @@
 
   .section-h{font-size:1.15rem;font-weight:700;margin:30px 0 12px;letter-spacing:-.01em}
 
+  .coach-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .coach-card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ink-faint);border-radius:var(--radius);padding:16px}
+  .coach-card.bad{border-left-color:var(--bad)}
+  .coach-card.warn{border-left-color:var(--warn)}
+  .coach-card.good{border-left-color:var(--good)}
+  .coach-card.info{border-left-color:var(--accent)}
+  .coach-title{font-weight:700;font-size:1rem;margin-bottom:6px}
+  .coach-body{color:var(--ink-dim);font-size:.88rem;line-height:1.5}
+  .coach-action{display:inline-block;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--accent);text-decoration:none;font-weight:600}
+  .coach-action:hover{text-decoration:underline}
+
   .battles2{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
   .m-row{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line-soft)}
   .m-row:last-child{border-bottom:none}
@@ -159,13 +170,14 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
     html+='<a class="dcard accentbar" style="text-decoration:none;color:inherit" href="./trainer.html"><div class="dl">Trainer</div><div class="dv small">Coaching &amp; matchups →</div></a>';
     html+='</div>';
 
+    html+='<div id="coachSection" style="margin-top:30px"></div>';
     html+='<div id="matchSection" style="margin-top:30px"></div>';
   }
 
   app.innerHTML=html;
 
-  // Load + render match history (and auto-sync if stale), only when onboarded
-  if(!needsOnboard && p.tekken_id){ initMatches(); }
+  // Load coach insights + match history (auto-sync if stale), only when onboarded
+  if(!needsOnboard && p.tekken_id){ initMatches(); initCoach(); }
   else if(!needsOnboard && !p.tekken_id){
     const ms=document.getElementById("matchSection");
     if(ms) ms.innerHTML='<div class="callout info"><div class="co-title">Add your Tekken ID to unlock match history</div><p>Set your Tekken ID in your <a href="./profile.html" style="color:var(--accent);text-decoration:none">profile</a> and your recent matches, win rate, and matchup breakdown will appear here.</p></div>';
@@ -176,6 +188,31 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
     if(!slug) return card(label,"—");
     const img='<img src="'+TekAssets.charImg(slug)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(pretty(slug))+'\',34,\'#4d9fff\')">';
     return '<div class="dcard"><div class="dl">'+label+'</div><div class="charline">'+img+'<span class="dv small">'+esc(pretty(slug))+'</span></div></div>';
+  }
+
+  async function initCoach(){
+    const cs=document.getElementById("coachSection");
+    if(!cs) return;
+    cs.innerHTML='<div class="section-h">🎯 Your Coach</div><div class="loadingwrap" style="margin:16px auto"><div class="spinner"></div>Analyzing your matches…</div>';
+    let res=await TEK.api("/api/me/coach");
+    const d=res.ok?res.data:null;
+    if(!d){ cs.innerHTML=''; return; }
+    if(!d.ready){
+      cs.innerHTML='<div class="section-h">🎯 Your Coach</div><div class="callout info"><p>'+esc(d.message||"Sync more matches to unlock coaching.")+'</p></div>';
+      return;
+    }
+    let h='<div class="section-h">🎯 Your Coach</div>';
+    h+='<div class="coach-grid">';
+    (d.insights||[]).forEach(ins=>{
+      const sev=ins.severity||"info";
+      h+='<div class="coach-card '+sev+'">'+
+         '<div class="coach-title">'+esc(ins.title)+'</div>'+
+         '<div class="coach-body">'+ins.body.replace(/</g,"&lt;")+'</div>'+
+         (ins.action?'<a class="coach-action" href="'+esc(ins.action.href)+'">'+esc(ins.action.label)+'</a>':'')+
+         '</div>';
+    });
+    h+='</div>';
+    cs.innerHTML=h;
   }
 
   async function initMatches(){
