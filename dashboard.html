@@ -101,7 +101,13 @@ function pretty(slug){if(!slug)return "";return String(slug).split(/[_-]/).map(w
   app.innerHTML='<div class="loadingwrap"><div class="spinner"></div>Loading your profile…</div>';
 
   const { ok, data } = await TEK.api("/api/me/profile");
-  if(!ok){ app.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load your profile. '+(data&&data.error?esc(data.error):"")+'</div>'; return; }
+  if(!ok){
+    // TEMP: run auth diagnostic to show exactly why
+    let dbg="";
+    try{ const d=await TEK.api("/api/me/debug"); dbg='<pre style="text-align:left;background:#06090f;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px;overflow:auto;font-size:.72rem;color:var(--ink-dim)">'+esc(JSON.stringify(d.data,null,2))+'</pre>'; }catch(e){}
+    app.innerHTML='<div class="errbox" style="margin:0 auto">Couldn\'t load your profile. '+(data&&data.error?esc(data.error):"")+'</div>'+dbg;
+    return;
+  }
 
   const u=data.user||{}, p=data.profile||{};
   const cu=window.Clerk.user;
