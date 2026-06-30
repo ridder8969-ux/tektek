@@ -3,120 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lightning Trainer — Tekken 8</title>
+<title>Lightning Trainer — Tekken 8 Toolkit</title>
 <link rel="stylesheet" href="./style.css">
 <style>
-  .topstats{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--bg2)}
-  .topstats .ts{flex:1;padding:14px 22px;border-right:1px solid var(--line);min-width:0}
-  .topstats .ts:last-child{border-right:none}
-  .topstats .ts .n{font-size:1.3rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);font-family:'JetBrains Mono',monospace}
-  .topstats .ts .l{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
-  .topstats .ts .n.loading{color:var(--ink-faint);font-size:1rem}
-
-  .hero{padding:60px 22px 44px;max-width:1080px;margin:0 auto;text-align:center}
-  .hero h1{font-size:clamp(2.4rem,6vw,3.6rem);font-weight:700;letter-spacing:-.03em;line-height:1.05}
-  .hero h1 .accent{color:var(--accent)}
-  .hero .tag{color:var(--ink-dim);max-width:560px;margin:16px auto 0;font-size:1.02rem}
+  .hero{padding:64px 24px 40px;max-width:1120px;margin:0 auto;text-align:center}
+  .hero h1{font-size:clamp(2.6rem,6vw,4rem);font-weight:800;letter-spacing:-.035em;line-height:1.04}
+  .hero h1 .accent{background:linear-gradient(120deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .tag{color:var(--ink-dim);max-width:600px;margin:18px auto 0;font-size:1.05rem}
   .hero .tag strong{color:var(--ink);font-weight:600}
+  .hero .cta-row{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap}
 
-  .features{display:grid;gap:1px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:8px}
-  .feature{background:var(--panel);padding:24px;text-decoration:none;color:inherit;transition:background .12s;display:block}
-  .feature:hover{background:var(--panel-2)}
-  .feature .ic{font-size:1.4rem;margin-bottom:10px;display:block;opacity:.9}
+  .features{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:10px}
+  .feature{background:var(--panel);border:1px solid var(--line);padding:24px;text-decoration:none;color:inherit;transition:border-color .14s,background .14s,transform .14s;border-radius:var(--radius);display:block}
+  .feature:hover{background:var(--panel-2);border-color:var(--accent-dim);transform:translateY(-2px)}
+  .feature .ic{width:42px;height:42px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:14px}
   .feature h3{font-size:1.15rem;font-weight:700;margin-bottom:5px;letter-spacing:-.01em}
   .feature p{color:var(--ink-dim);font-size:.88rem;line-height:1.5}
-  .feature .go{margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent);letter-spacing:.03em}
+  .feature .go{margin-top:13px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent);letter-spacing:.03em}
 
-  .section-title{font-size:1.2rem;font-weight:700;margin:40px 0 14px;letter-spacing:-.01em}
+  .section-title{font-size:1.3rem;font-weight:700;margin:44px 0 16px;letter-spacing:-.01em}
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a class="logo" href="./index.html"><span class="dot"></span>Lightning Trainer</a>
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
   <a class="navlink" href="./trainer.html">Trainer</a>
   <a class="navlink" href="./framedata.html">Frame Data</a>
   <a class="navlink" href="./player.html">Player Lookup</a>
   <a class="navlink" href="./rank.html">Rank Guide</a>
   <a class="navlink" href="./resources.html">Resources</a>
+  <span class="spacer"></span>
+  <a class="nav-cta" href="./player.html">Look up a player</a>
 </nav>
 
-<div class="topstats" id="topstats">
-  <div class="ts"><div class="n loading" id="ts-players">—</div><div class="l">Active Players (30d)</div></div>
-  <div class="ts"><div class="n loading" id="ts-ranked">—</div><div class="l">Ranked Matches (30d)</div></div>
-  <div class="ts"><div class="n loading" id="ts-battles">—</div><div class="l">Total Battles Tracked</div></div>
-  <div class="ts"><div class="n" id="ts-patch">S3</div><div class="l">Current Patch</div></div>
+<div class="statbar" id="statbar">
+  <div class="sb"><div class="sv loading" id="sb-chars">—</div><div class="sl">Characters Tracked</div></div>
+  <div class="sb"><div class="sv loading" id="sb-players">—</div><div class="sl">Active Players (30d)</div></div>
+  <div class="sb"><div class="sv loading" id="sb-matches">—</div><div class="sl">Ranked Matches (30d)</div></div>
+  <div class="sb"><div class="sv" id="sb-patch">S3</div><div class="sl">Current Patch</div></div>
 </div>
 
 <header class="hero">
   <div class="eyebrow">Tekken 8 · Rank Grinder Toolkit</div>
   <h1>Climb with <span class="accent">fundamentals.</span></h1>
-  <p class="tag">A Lars coaching playbook, <strong>live frame data for all 41 characters</strong>, and player stats for you and your crew. Clean, fast, and built around what actually wins matches.</p>
+  <p class="tag">A Lars coaching playbook, <strong>live frame data for the whole roster</strong>, player stats, and a rank-by-rank improvement guide — in one clean place. Built around what actually wins matches.</p>
+  <div class="cta-row">
+    <a class="btn" href="./trainer.html">Open the Trainer</a>
+    <a class="btn btn-ghost" href="./framedata.html">Browse Frame Data</a>
+  </div>
 </header>
 
 <div class="wrap" style="padding-top:0">
   <div class="features">
     <a class="feature" href="./trainer.html">
       <span class="ic">⚡</span><h3>Lars Trainer</h3>
-      <p>Punishers, pokes, combos, defense, and matchup plans — color-coded for risk, in Xbox buttons.</p>
+      <p>Punishers, pokes, combos, defense, and 7 deep matchup plans — color-coded for risk, in Xbox buttons.</p>
       <div class="go">Open trainer →</div>
     </a>
     <a class="feature" href="./framedata.html">
       <span class="ic">▦</span><h3>Frame Data</h3>
-      <p>Every move for every character, live from TekkenDocs. Sort, filter, spot what's safe at a glance.</p>
+      <p>Every move for every character, live from TekkenDocs. Sort, filter by risk, spot what's safe at a glance.</p>
       <div class="go">Search all characters →</div>
     </a>
     <a class="feature" href="./player.html">
       <span class="ic">◎</span><h3>Player Lookup</h3>
-      <p>Paste a Tekken ID for ranked stats and recent battles. Save your crew. See who's winning.</p>
+      <p>Paste a Tekken ID for ranked stats, character breakdown, and recent battles. Save your crew.</p>
       <div class="go">Look up a player →</div>
     </a>
-    <a class="feature" href="./resources.html">
-      <span class="ic">⬡</span><h3>Resources</h3>
-      <p>The best Tekken data tools on the web — frame data sites, stat trackers, community projects.</p>
-      <div class="go">Browse tools →</div>
+    <a class="feature" href="./rank.html">
+      <span class="ic">▲</span><h3>Rank Guide</h3>
+      <p>Pick your rank and get a focused plan for your tier — exactly what to drill to climb out.</p>
+      <div class="go">Find your plan →</div>
     </a>
   </div>
 
   <div class="section-title">New here?</div>
   <div class="callout info">
     <div class="co-title">The one thing that climbs rank</div>
-    <p>It isn't combos or flashy stance mixups — it's <strong>blocking and punishing mistakes</strong>, and not pressing when it's not your turn. Open the trainer, learn the Core 6, drill the punishers, and take the Hwoarang plan into ranked.</p>
+    <p>It isn't combos or flashy stance mixups — it's <strong>blocking and punishing mistakes</strong>, and not pressing when it's not your turn. Open the trainer, learn the Core 6, drill the punishers, and take the Bryan plan into ranked.</p>
   </div>
 </div>
 
 <footer class="site">
-  An unofficial Tekken 8 toolkit. Frame data from <a href="https://tekkendocs.com" target="_blank" rel="noopener">tekkendocs.com</a> · player stats from <a href="https://www.ewgf.gg" target="_blank" rel="noopener">ewgf.gg</a>. Not affiliated with Bandai Namco.<br>Built for RIDD &amp; crew.
+  <div class="fcols">
+    <div class="fbrand">
+      <div class="flogo"><span class="dot">L</span>Lightning Trainer</div>
+      <p>An unofficial Tekken 8 toolkit — coaching, frame data, and player stats. Not affiliated with Bandai Namco Entertainment Inc.</p>
+    </div>
+    <div class="fcol"><h4>Tools</h4>
+      <a href="./trainer.html">Lars Trainer</a><a href="./framedata.html">Frame Data</a><a href="./player.html">Player Lookup</a><a href="./rank.html">Rank Guide</a><a href="./resources.html">Resources</a>
+    </div>
+    <div class="fcol"><h4>Data Sources</h4>
+      <a href="https://tekkendocs.com" target="_blank" rel="noopener">TekkenDocs</a><a href="https://www.ewgf.gg" target="_blank" rel="noopener">ewgf.gg</a><a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a><a href="https://wavu.wiki" target="_blank" rel="noopener">Wavu Wiki</a>
+    </div>
+  </div>
+  <div class="fbar">TEKKEN® and TEKKEN 8 are registered trademarks of Bandai Namco Entertainment Inc. This site is not affiliated with or endorsed by Bandai Namco. · Built for RIDD &amp; crew.</div>
 </footer>
 
 <script>
-function fmt(n){ n=parseInt(n,10); if(isNaN(n))return null; if(n>=1e6)return (n/1e6).toFixed(1)+"M"; if(n>=1e3)return (n/1e3).toFixed(1)+"K"; return String(n); }
-function pick(o,keys){ if(!o)return null; for(const k of keys){if(o[k]!==undefined&&o[k]!==null)return o[k];} return null; }
-function setStat(id,val,fallback){
-  const el=document.getElementById(id);
-  if(val!==null&&val!==undefined){ el.textContent=val; el.classList.remove("loading"); }
-  else if(fallback){ el.textContent=fallback; el.classList.remove("loading"); }
-  else { el.textContent="—"; }
-}
+function fmt(n){n=parseInt(n,10);if(isNaN(n))return null;if(n>=1e6)return (n/1e6).toFixed(1)+"M";if(n>=1e3)return (n/1e3).toFixed(1)+"K";return String(n);}
+function pick(o,keys){if(!o)return null;for(const k of keys){if(o[k]!==undefined&&o[k]!==null)return o[k];}return null;}
+function setStat(id,val,fb){const el=document.getElementById(id);if(val!==null&&val!==undefined){el.textContent=val;el.classList.remove("loading");}else if(fb){el.textContent=fb;el.classList.remove("loading");}else{el.textContent="—";}}
+setStat("sb-chars","42","");
 (async function(){
   try{
-    const res=await fetch("/api/sitestats");
-    const j=await res.json();
-    if(j.available&&j.data){
-      const d=j.data;
-      setStat("ts-players", fmt(pick(d,["activePlayers","active_players","players30d","totalPlayers"])), null);
-      setStat("ts-ranked",  fmt(pick(d,["rankedMatches","ranked_matches","ranked30d","rankedReplays"])), null);
-      setStat("ts-battles", fmt(pick(d,["totalBattles","total_battles","totalReplays","battles"])), null);
-    } else {
-      // EWGF aggregate endpoint not available on this key — show clean fallbacks
-      setStat("ts-players","Live","");
-      setStat("ts-ranked","Live","");
-      setStat("ts-battles","41 chars","");
-    }
-  }catch(e){
-    setStat("ts-players","—",""); setStat("ts-ranked","—",""); setStat("ts-battles","—","");
-  }
+    const res=await fetch("/api/sitestats");const j=await res.json();
+    if(j.available&&j.data){const d=j.data;
+      setStat("sb-players",fmt(pick(d,["activePlayers","active_players","players30d","totalPlayers"])),"Live");
+      setStat("sb-matches",fmt(pick(d,["rankedMatches","ranked_matches","ranked30d","rankedReplays"])),"Live");
+    }else{setStat("sb-players","Live","");setStat("sb-matches","Live","");}
+  }catch(e){setStat("sb-players","—","");setStat("sb-matches","—","");}
 })();
 </script>
 </body>

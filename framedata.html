@@ -6,112 +6,139 @@
 <title>Frame Data — Lightning Trainer</title>
 <link rel="stylesheet" href="./style.css">
 <style>
-  .explainer{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:20px 0}
+  .explainer{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:18px 0}
   .explainer h3{font-size:1rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .explainer .rows{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .explainer .rows{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
   .explainer .er{display:flex;gap:10px;align-items:flex-start}
-  .explainer .er .term{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent);min-width:62px;font-size:.82rem;padding-top:1px}
+  .explainer .er .term{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent);min-width:64px;font-size:.82rem;padding-top:1px}
   .explainer .er .def{color:var(--ink-dim);font-size:.85rem;line-height:1.45}
   .explainer .er .def b{color:var(--ink)}
+  .explainer .simple{color:var(--ink-dim);font-size:.85rem;margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px}
+  .explainer .simple b{color:var(--ink)}
 
-  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:20px 0 6px}
-  .char-select{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:.95rem;padding:11px 15px;border-radius:9px;outline:none;cursor:pointer;min-width:190px}
+  .char-head{display:flex;align-items:center;gap:16px;margin:8px 0 18px}
+  .char-portrait{width:56px;height:56px;border-radius:12px;object-fit:cover;border:1px solid var(--line);background:var(--panel-2);flex:none}
+  .char-head .ch-meta .ch-name{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .char-head .ch-meta .ch-sub{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin-top:3px}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0 6px}
+  .char-select{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:.95rem;padding:11px 15px;border-radius:var(--radius-sm);outline:none;cursor:pointer;min-width:200px}
   .char-select:focus{border-color:var(--accent)}
-  .filter-input{flex:1;min-width:160px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:.9rem;padding:11px 14px;border-radius:9px;outline:none}
+  .filter-input{flex:1;min-width:160px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:.9rem;padding:11px 14px;border-radius:var(--radius-sm);outline:none}
   .filter-input:focus{border-color:var(--accent)}
   .filter-input::placeholder{color:var(--ink-faint)}
 
   .quickfilters{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}
   .qf{font-family:'JetBrains Mono',monospace;font-size:.72rem;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);padding:7px 12px;border-radius:7px;cursor:pointer;transition:all .12s}
   .qf:hover{color:var(--ink);border-color:var(--accent-dim)}
-  .qf.on{background:var(--accent);color:#0a0d12;border-color:var(--accent);font-weight:600}
+  .qf.on{background:var(--accent);color:#06101c;border-color:var(--accent);font-weight:600}
   .qf.risky.on{background:var(--bad);border-color:var(--bad);color:#fff}
-  .qf.safe.on{background:var(--good);border-color:var(--good);color:#0a1f14}
+  .qf.safe.on{background:var(--good);border-color:var(--good);color:#06140d}
 
+  .legend-bar{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;font-size:.78rem;color:var(--ink-dim)}
+  .legend-bar .li{display:flex;align-items:center;gap:7px}
+  .ldot{width:10px;height:10px;border-radius:3px;flex:none}
+  .ldot.safe{background:var(--good)} .ldot.warn{background:var(--warn)} .ldot.danger{background:var(--bad)}
   .count-line{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin:6px 0 14px}
 
-  .fd-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .fd-table th{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:11px 13px;background:var(--panel-2);border-bottom:1px solid var(--line);cursor:help;user-select:none;white-space:nowrap;position:relative}
-  .fd-table th .sortbtn{cursor:pointer}
-  .fd-table th:hover{color:var(--accent)}
-  .fd-table th .ar{opacity:.4;font-size:.7rem}
-  .fd-table th.sorted .ar{opacity:1;color:var(--accent)}
-  .fd-table td{padding:10px 13px;border-bottom:1px solid var(--line-soft);font-size:.86rem;vertical-align:top}
-  .fd-table tr:last-child td{border-bottom:none}
-  .fd-table tbody tr:hover{background:var(--panel-2)}
+  /* ---- DataTable ---- */
+  .dt-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+  .dt-scroll{overflow-x:auto}
+  table.dt{width:100%;border-collapse:collapse;min-width:680px}
+  table.dt thead th{
+    position:sticky;top:0;z-index:2;
+    font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-dim);text-align:left;padding:12px 14px;background:var(--panel-3);
+    border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap;transition:color .12s
+  }
+  table.dt thead th:hover{color:var(--accent)}
+  table.dt thead th .ar{opacity:.35;font-size:.7rem;margin-left:3px}
+  table.dt thead th.sorted{color:var(--accent)} table.dt thead th.sorted .ar{opacity:1}
+  table.dt tbody td{padding:11px 14px;border-bottom:1px solid var(--line-soft);font-size:.875rem;vertical-align:top}
+  table.dt tbody tr:last-child td{border-bottom:none}
+  table.dt tbody tr{transition:background .1s}
+  table.dt tbody tr:hover{background:var(--panel-2)}
+  table.dt tbody tr:nth-child(even){background:rgba(255,255,255,0.012)}
+  table.dt tbody tr:nth-child(even):hover{background:var(--panel-2)}
+
   .cmd{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--ink);white-space:nowrap}
-  .lvl{font-family:'JetBrains Mono',monospace;font-size:.8rem}
-  .lvl .h{color:var(--warn)} .lvl .m{color:var(--accent)} .lvl .l{color:var(--bad)}
+  .cmd .mname{color:var(--ink-faint);font-weight:400;font-size:.72rem;margin-top:2px;font-family:'Inter',sans-serif}
+  .lvl{font-family:'JetBrains Mono',monospace;font-size:.8rem;white-space:nowrap}
+  .lvl .h{color:var(--warn)} .lvl .m{color:var(--accent)} .lvl .l{color:var(--bad)} .lvl .t{color:var(--purple)}
   .fr{font-family:'JetBrains Mono',monospace;font-weight:600;white-space:nowrap}
   .fr.plus{color:var(--good)} .fr.minus-sm{color:var(--warn)} .fr.minus-big{color:var(--bad)} .fr.neutral{color:var(--ink-dim)}
-  .tag-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;vertical-align:middle}
-  .tag-pill.launch{background:var(--accent-soft);color:var(--accent)}
+  .tag-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.58rem;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;vertical-align:middle}
+  .tag-pill.launch{background:var(--bad-soft);color:var(--bad)}
   .tag-pill.safe{background:var(--good-soft);color:var(--good)}
-  .tag-pill.danger{background:var(--bad-soft);color:var(--bad)}
-  .notes{color:var(--ink-faint);font-size:.78rem;max-width:220px}
-
-  .legend-bar{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0;font-size:.78rem;color:var(--ink-dim)}
-  .legend-bar .li{display:flex;align-items:center;gap:7px}
-  .dot{width:10px;height:10px;border-radius:3px;flex:none}
-  .dot.safe{background:var(--good)} .dot.warn{background:var(--warn)} .dot.danger{background:var(--bad)}
+  .tag-pill.he{background:var(--warn-soft);color:var(--warn)}
+  .notes{color:var(--ink-faint);font-size:.78rem;max-width:240px;line-height:1.4}
+  .mtag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.56rem;padding:1px 5px;border-radius:3px;margin:1px 3px 1px 0;background:var(--panel-3);color:var(--ink-dim)}
 
   .state{text-align:center;margin:50px auto;color:var(--ink-dim)}
-  .errbox{background:var(--bad-soft);border:1px solid rgba(232,112,74,0.4);border-radius:10px;padding:18px 20px;color:#f3c4b3;max-width:560px;margin:30px auto}
+  .errbox{background:var(--bad-soft);border:1px solid rgba(240,102,75,0.4);border-radius:10px;padding:18px 20px;color:#f6c9bd;max-width:600px;margin:30px auto}
   .errbox b{color:var(--bad);font-size:1rem}
 
-  @media(max-width:680px){ .fd-table th.opt,.fd-table td.opt{display:none} .fd-table td,.fd-table th{padding:9px 8px;font-size:.8rem} }
+  @media(max-width:680px){.dt-opt{display:none}}
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a class="logo" href="./index.html"><span class="dot"></span>Lightning Trainer</a>
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
   <a class="navlink" href="./trainer.html">Trainer</a>
   <a class="navlink active" href="./framedata.html">Frame Data</a>
   <a class="navlink" href="./player.html">Player Lookup</a>
   <a class="navlink" href="./rank.html">Rank Guide</a>
   <a class="navlink" href="./resources.html">Resources</a>
+  <span class="spacer"></span>
+  <a class="nav-cta" href="./player.html">Look up a player</a>
 </nav>
 
 <div class="wrap">
   <div class="eyebrow">All Characters · Live from TekkenDocs</div>
   <h1 class="page">Frame Data</h1>
-  <p class="lead">Every move for every character. <strong>New to frame data? Read the panel below — then let the colors do the work.</strong></p>
+  <p class="lead">Every move for every character. <strong>New to frame data? Read the panel — then let the colors do the work.</strong></p>
 
   <div class="explainer">
     <h3>📖 How to read this</h3>
     <div class="rows">
-      <div class="er"><span class="term">Command</span><span class="def">The buttons you press for the move (e.g. <b>df+1</b>).</span></div>
-      <div class="er"><span class="term">Hit</span><span class="def">Where it hits: <b style="color:var(--warn)">h</b>=high (duckable), <b style="color:var(--accent)">m</b>=mid (block standing), <b style="color:var(--bad)">l</b>=low (block crouching).</span></div>
-      <div class="er"><span class="term">Startup</span><span class="def">How fast it comes out, in frames. <b>Lower = faster</b> (i10 beats i15).</span></div>
-      <div class="er"><span class="term">Block</span><span class="def">What happens to <b>them</b> after you block it. <b style="color:var(--bad)">Big negative = they're punishable</b> — your turn to hit back.</span></div>
-      <div class="er"><span class="term">Hit</span><span class="def">What happens after it <b>hits you</b>. Positive = they get to keep pressing.</span></div>
-      <div class="er"><span class="term">CH</span><span class="def">Counter-hit value — bonus advantage if it interrupts your button.</span></div>
+      <div class="er"><span class="term">Command</span><span class="def">The buttons you press (e.g. <b>df+1</b>).</span></div>
+      <div class="er"><span class="term">Hit</span><span class="def"><b style="color:var(--warn)">h</b>=high (duckable), <b style="color:var(--accent)">m</b>=mid (block standing), <b style="color:var(--bad)">l</b>=low (block crouching), <b style="color:var(--purple)">t</b>=throw.</span></div>
+      <div class="er"><span class="term">Speed</span><span class="def">Startup frames. <b>Lower = faster</b> (i10 beats i15).</span></div>
+      <div class="er"><span class="term">On Block</span><span class="def">What happens to <b>them</b> after you block it. <b style="color:var(--bad)">Big negative = punishable</b>.</span></div>
+      <div class="er"><span class="term">On Hit</span><span class="def">Advantage after it hits. Positive = they keep pressing.</span></div>
+      <div class="er"><span class="term">CH</span><span class="def">Counter-hit value if it interrupts your button.</span></div>
     </div>
-    <p style="color:var(--ink-dim);font-size:.85rem;margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px">
-      <b style="color:var(--ink)">The simple version:</b> look at the <b style="color:var(--good)">Block</b> column color. <span style="color:var(--good)">Green = it's safe / your turn after blocking</span>. <span style="color:var(--warn)">Yellow = mildly minus</span>. <span style="color:var(--bad)">Orange = you can launch them for blocking it</span>. You don't need the numbers — the color tells you who's in danger.
-    </p>
+    <p class="simple"><b>The simple version:</b> look at the <b>On Block</b> color. <span style="color:var(--good)">Green = your turn</span>. <span style="color:var(--warn)">Yellow = mildly minus</span>. <span style="color:var(--bad)">Orange = you can launch them.</span> You don't need the numbers — the color tells you who's in danger.</p>
+  </div>
+
+  <div class="char-head" id="charHead" style="display:none">
+    <img class="char-portrait" id="charPortrait" alt="" />
+    <div class="ch-meta"><div class="ch-name" id="chName">—</div><div class="ch-sub" id="chSub"></div></div>
   </div>
 
   <div class="controls">
     <select class="char-select" id="charSelect" aria-label="Choose character"></select>
-    <input class="filter-input" id="filterInput" type="text" placeholder="Filter… (e.g. df1, low, heat)" autocomplete="off">
+    <input class="filter-input" id="filterInput" type="text" placeholder="Filter… (e.g. df1, low, heat, homing)" autocomplete="off">
   </div>
 
   <div class="quickfilters" id="quickfilters">
-    <button class="qf" data-f="all">All moves</button>
+    <button class="qf on" data-f="all">All moves</button>
     <button class="qf risky" data-f="unsafe">⚠ I can launch this (−15+)</button>
     <button class="qf risky" data-f="punishable">Punishable (−10+)</button>
     <button class="qf safe" data-f="plus">Safe / my turn</button>
     <button class="qf" data-f="lows">Lows</button>
     <button class="qf" data-f="mids">Mids</button>
-    <button class="qf" data-f="homing">Homing / Heat</button>
+    <button class="qf" data-f="highs">Highs</button>
+    <button class="qf" data-f="throws">Throws</button>
+    <button class="qf" data-f="homing">Homing</button>
+    <button class="qf" data-f="heat">Heat</button>
   </div>
 
   <div class="legend-bar">
-    <span class="li"><span class="dot safe"></span> safe — your turn after block</span>
-    <span class="li"><span class="dot warn"></span> mildly minus — their turn</span>
-    <span class="li"><span class="dot danger"></span> launch-punishable on block</span>
+    <span class="li"><span class="ldot safe"></span> safe — your turn after block</span>
+    <span class="li"><span class="ldot warn"></span> mildly minus — their turn</span>
+    <span class="li"><span class="ldot danger"></span> launch-punishable on block</span>
   </div>
 
   <div class="count-line" id="countLine"></div>
@@ -121,82 +148,134 @@
 </div>
 
 <footer class="site">
-  Frame data courtesy of <a href="https://tekkendocs.com" target="_blank" rel="noopener">tekkendocs.com</a> &amp; <a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a>. For the final word on any number, use the in-game move list with frame data on.<br>Built for RIDD &amp; crew.
+  <div class="fcols">
+    <div class="fbrand">
+      <div class="flogo"><span class="dot">L</span>Lightning Trainer</div>
+      <p>An unofficial Tekken 8 toolkit — coaching, frame data, and player stats. Not affiliated with Bandai Namco.</p>
+    </div>
+    <div class="fcol"><h4>Tools</h4>
+      <a href="./trainer.html">Lars Trainer</a><a href="./framedata.html">Frame Data</a><a href="./player.html">Player Lookup</a><a href="./rank.html">Rank Guide</a>
+    </div>
+    <div class="fcol"><h4>Data Sources</h4>
+      <a href="https://tekkendocs.com" target="_blank" rel="noopener">TekkenDocs</a><a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a><a href="https://www.ewgf.gg" target="_blank" rel="noopener">ewgf.gg</a><a href="https://wavu.wiki" target="_blank" rel="noopener">Wavu Wiki</a>
+    </div>
+  </div>
+  <div class="fbar">Frame data courtesy of tekkendocs.com &amp; rbnorway.org. For the final word on any number, use the in-game move list. · Built for RIDD &amp; crew.</div>
 </footer>
 
+<script src="./assets.js"></script>
 <script>
-const ROSTER=["alisa","anna","armorking","asuka","azucena","bryan","clive","claudio","devil_jin","dragunov","eddy","fahkumram","feng","heihachi","hwoarang","jack-8","jin","jun","kazuya","king","kuma","lars","law","lee","leo","leroy","lidia","lili","miary","nina","panda","paul","raven","reina","shaheen","steve","victor","xiaoyu","yoshimitsu","zafina","kunimitsu"];
-const PRETTY={"devil_jin":"Devil Jin","jack-8":"Jack-8","armorking":"Armor King","miary":"Miary Zo"};
-function prettyName(s){return PRETTY[s]||s.split(/[_-]/).map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");}
+const ROSTER=[
+  {slug:"alisa",name:"Alisa"},{slug:"anna",name:"Anna"},{slug:"armor-king",name:"Armor King"},{slug:"asuka",name:"Asuka"},
+  {slug:"azucena",name:"Azucena"},{slug:"bryan",name:"Bryan"},{slug:"clive",name:"Clive"},{slug:"claudio",name:"Claudio"},
+  {slug:"devil-jin",name:"Devil Jin"},{slug:"dragunov",name:"Dragunov"},{slug:"eddy",name:"Eddy"},{slug:"fahkumram",name:"Fahkumram"},
+  {slug:"feng",name:"Feng"},{slug:"heihachi",name:"Heihachi"},{slug:"hwoarang",name:"Hwoarang"},{slug:"jack-8",name:"Jack-8"},
+  {slug:"jin",name:"Jin"},{slug:"jun",name:"Jun"},{slug:"kazuya",name:"Kazuya"},{slug:"king",name:"King"},
+  {slug:"kuma",name:"Kuma"},{slug:"lars",name:"Lars"},{slug:"law",name:"Law"},{slug:"lee",name:"Lee"},
+  {slug:"leo",name:"Leo"},{slug:"leroy",name:"Leroy"},{slug:"lidia",name:"Lidia"},{slug:"lili",name:"Lili"},
+  {slug:"miary",name:"Miary Zo"},{slug:"nina",name:"Nina"},{slug:"panda",name:"Panda"},{slug:"paul",name:"Paul"},
+  {slug:"raven",name:"Raven"},{slug:"reina",name:"Reina"},{slug:"shaheen",name:"Shaheen"},{slug:"steve",name:"Steve"},
+  {slug:"victor",name:"Victor"},{slug:"xiaoyu",name:"Xiaoyu"},{slug:"yoshimitsu",name:"Yoshimitsu"},{slug:"zafina",name:"Zafina"},
+  {slug:"kunimitsu",name:"Kunimitsu"},{slug:"bob",name:"Bob"}
+];
 
 const charSelect=document.getElementById("charSelect"),filterInput=document.getElementById("filterInput"),quickfilters=document.getElementById("quickfilters"),countLine=document.getElementById("countLine"),loading=document.getElementById("loading"),errSlot=document.getElementById("errSlot"),tableSlot=document.getElementById("tableSlot");
-let allMoves=[],activeQuick="all",sortKey=null,sortDir=1;
+const charHead=document.getElementById("charHead"),charPortrait=document.getElementById("charPortrait"),chName=document.getElementById("chName"),chSub=document.getElementById("chSub");
+let allMoves=[],activeQuick="all",sortKey=null,sortDir=1,currentName="";
 
-ROSTER.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=prettyName(s);if(s==="lars")o.selected=true;charSelect.appendChild(o);});
+ROSTER.forEach(c=>{const o=document.createElement("option");o.value=c.slug;o.textContent=c.name;if(c.slug==="lars")o.selected=true;charSelect.appendChild(o);});
 
-function frameNum(v){if(!v)return null;const m=String(v).match(/-?\d+/);return m?parseInt(m[0],10):null;}
+function frameNum(v){if(!v&&v!==0)return null;const m=String(v).match(/-?\d+/);return m?parseInt(m[0],10):null;}
 function blockClass(v){const n=frameNum(v);if(n===null)return "neutral";if(n>=0)return "plus";if(n<=-15)return "minus-big";if(n<=-10)return "minus-sm";return "neutral";}
 function escapeHtml(s){if(s==null)return "";if(typeof s==="object")s=JSON.stringify(s);return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+function setPortrait(slug,name){
+  currentName=name;
+  charHead.style.display="flex";
+  chName.textContent=name;
+  charPortrait.style.display="block";
+  charPortrait.src=TekAssets.charImg(slug);
+  charPortrait.onerror=function(){
+    // replace broken img with a colored initial block
+    charPortrait.style.display="none";
+    if(!charHead.querySelector(".img-fallback")){
+      charHead.insertAdjacentHTML("afterbegin",TekAssets.initialBlock(name,56,"#4d9fff"));
+    }
+  };
+  // clear any previous fallback when switching
+  const fb=charHead.querySelector(".img-fallback"); if(fb) fb.remove();
+}
+
 async function loadChar(slug){
+  const meta=ROSTER.find(c=>c.slug===slug)||{name:slug};
   allMoves=[];errSlot.innerHTML="";tableSlot.innerHTML="";countLine.textContent="";loading.style.display="block";
+  setPortrait(slug,meta.name);
   try{
     const res=await fetch("/api/framedata?char="+encodeURIComponent(slug));
     const data=await res.json();loading.style.display="none";
     if(!res.ok||data.error){showError(data.error||"Couldn't load frame data.");return;}
     allMoves=data.moves||[];
+    chSub.textContent=(data.count||allMoves.length)+" moves · live from TekkenDocs";
     if(allMoves.length===0){showError("No moves returned for this character.");return;}
     render();
   }catch(err){loading.style.display="none";showError("Couldn't reach the frame-data service. (Local file? It only works on the deployed site.)");}
 }
 function showError(msg){errSlot.innerHTML='<div class="errbox"><b>Couldn\'t load that.</b><br>'+escapeHtml(msg)+'</div>';}
 
-function passesQuick(m){const b=frameNum(m.block),lvl=(m.hitLevel||"").toLowerCase(),notes=(m.notes||"").toLowerCase();
-  switch(activeQuick){case "unsafe":return b!==null&&b<=-15;case "punishable":return b!==null&&b<=-10;case "plus":return b!==null&&b>=0;case "lows":return lvl.includes("l");case "mids":return lvl.includes("m");case "homing":return notes.includes("homing")||notes.includes("heat")||notes.includes("tornado");default:return true;}}
-function passesText(m){const q=filterInput.value.trim().toLowerCase();if(!q)return true;return [m.command,m.hitLevel,m.notes,m.block,m.startup].some(f=>String(f||"").toLowerCase().includes(q));}
+function passesQuick(m){
+  const b=frameNum(m.block),lvl=(m.hitLevel||"").toLowerCase();
+  switch(activeQuick){
+    case "unsafe":return b!==null&&b<=-15;
+    case "punishable":return b!==null&&b<=-10;
+    case "plus":return b!==null&&b>=0;
+    case "lows":return /l/.test(lvl)&&!/sl/.test(lvl);
+    case "mids":return /m/.test(lvl);
+    case "highs":return /h/.test(lvl);
+    case "throws":return m.isThrow||/t/.test(lvl);
+    case "homing":return m.isHoming;
+    case "heat":return m.isHeat;
+    default:return true;
+  }
+}
+function passesText(m){const q=filterInput.value.trim().toLowerCase();if(!q)return true;return [m.command,m.name,m.hitLevel,m.notes,m.block,m.startup,m.tags].some(f=>String(f||"").toLowerCase().includes(q));}
 
 function render(){
   let rows=allMoves.filter(m=>passesQuick(m)&&passesText(m));
-  if(sortKey){rows=rows.slice().sort((a,b)=>{let av,bv;if(["block","hit","startup","damage","counter"].includes(sortKey)){av=frameNum(a[sortKey]);bv=frameNum(b[sortKey]);if(av===null)av=9999;if(bv===null)bv=9999;}else{av=String(a[sortKey]||"");bv=String(b[sortKey]||"");}if(av<bv)return -sortDir;if(av>bv)return sortDir;return 0;});}
+  if(sortKey){rows=rows.slice().sort((a,b)=>{let av,bv;if(["block","hit","startup","damage","counter"].includes(sortKey)){av=frameNum(a[sortKey]);bv=frameNum(b[sortKey]);if(av===null)av=99999;if(bv===null)bv=99999;}else{av=String(a[sortKey]||"");bv=String(b[sortKey]||"");}if(av<bv)return -sortDir;if(av>bv)return sortDir;return 0;});}
   countLine.textContent=rows.length+" move"+(rows.length===1?"":"s")+" shown"+(activeQuick!=="all"?" · filtered":"");
   if(rows.length===0){tableSlot.innerHTML='<div class="state">No moves match that filter.</div>';return;}
 
-  const th=(key,label,tip,opt)=>'<th class="'+(opt?'opt ':'')+(sortKey===key?'sorted':'')+'" title="'+tip+'"><span class="sortbtn" data-sort="'+key+'">'+label+' <span class="ar">'+(sortKey===key?(sortDir>0?'▲':'▼'):'↕')+'</span></span></th>';
-  let html='<table class="fd-table"><thead><tr>'+
-    th("command","Command","The buttons you press")+
-    th("hitLevel","Hit","high / mid / low")+
-    th("startup","Speed","Startup frames — lower is faster")+
-    th("block","On Block","What happens to THEM after you block — orange means you can punish")+
-    th("hit","On Hit","What happens after it hits you","opt")+
-    th("counter","CH","Counter-hit advantage","opt")+
-    th("damage","Dmg","Damage","opt")+
-    '<th class="opt" title="Extra properties">Notes</th></tr></thead><tbody>';
+  const th=(key,label,opt)=>'<th class="'+(opt?'dt-opt ':'')+(sortKey===key?'sorted':'')+'" data-sort="'+key+'">'+label+'<span class="ar">'+(sortKey===key?(sortDir>0?'▲':'▼'):'↕')+'</span></th>';
+  let html='<div class="dt-wrap"><div class="dt-scroll"><table class="dt"><thead><tr>'+
+    th("command","Command")+th("hitLevel","Hit")+th("startup","Speed")+th("block","On Block")+
+    th("hit","On Hit","opt")+th("counter","CH","opt")+th("damage","Dmg","opt")+'<th class="dt-opt">Notes</th></tr></thead><tbody>';
   rows.forEach(m=>{
     const bn=frameNum(m.block);let tag="";
-    if(bn!==null&&bn<=-15)tag='<span class="tag-pill danger">launch</span>';
+    if(bn!==null&&bn<=-15)tag='<span class="tag-pill launch">launch</span>';
     else if(bn!==null&&bn>=0)tag='<span class="tag-pill safe">safe</span>';
-    html+='<tr><td class="cmd">'+escapeHtml(m.command)+tag+(m.name?'<div style="color:var(--ink-faint);font-weight:400;font-size:.72rem;margin-top:2px">'+escapeHtml(m.name)+'</div>':'')+'</td>'+
+    if(m.isHeat)tag+='<span class="tag-pill he">heat</span>';
+    html+='<tr><td class="cmd">'+escapeHtml(m.command)+tag+(m.name?'<div class="mname">'+escapeHtml(m.name)+'</div>':'')+'</td>'+
       '<td class="lvl">'+colorLevel(m.hitLevel)+'</td>'+
       '<td class="fr neutral">'+escapeHtml(m.startup||"")+'</td>'+
       '<td class="fr '+blockClass(m.block)+'">'+escapeHtml(m.block||"")+'</td>'+
-      '<td class="fr '+(frameNum(m.hit)>=0?'plus':'neutral')+' opt">'+escapeHtml(m.hit||"")+'</td>'+
-      '<td class="fr neutral opt">'+escapeHtml(m.counter||"")+'</td>'+
-      '<td class="fr neutral opt">'+escapeHtml(m.damage||"")+'</td>'+
-      '<td class="notes opt">'+escapeHtml(m.notes||"")+'</td></tr>';
+      '<td class="fr '+(frameNum(m.hit)>=0?'plus':'neutral')+' dt-opt">'+escapeHtml(m.hit||"")+'</td>'+
+      '<td class="fr neutral dt-opt">'+escapeHtml(m.counter||"")+'</td>'+
+      '<td class="fr neutral dt-opt">'+escapeHtml(m.damage||"")+'</td>'+
+      '<td class="notes dt-opt">'+escapeHtml(m.notes||"")+'</td></tr>';
   });
-  html+='</tbody></table>';
+  html+='</tbody></table></div></div>';
   tableSlot.innerHTML=html;
-  tableSlot.querySelectorAll(".sortbtn").forEach(h=>h.addEventListener("click",()=>{const k=h.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}render();}));
+  tableSlot.querySelectorAll("th[data-sort]").forEach(h=>h.addEventListener("click",()=>{const k=h.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}render();}));
 }
-function colorLevel(lvl){if(!lvl)return "";return String(lvl).split(",").map(part=>{const p=part.trim().toLowerCase();let cls="";if(p.startsWith("h"))cls="h";else if(p.startsWith("m"))cls="m";else if(p.startsWith("l"))cls="l";return '<span class="'+cls+'">'+escapeHtml(part.trim())+'</span>';}).join(", ");}
+function colorLevel(lvl){if(!lvl)return "";return String(lvl).split(",").map(part=>{const p=part.trim().toLowerCase();let cls="";if(p.startsWith("t"))cls="t";else if(p.startsWith("h"))cls="h";else if(p.startsWith("m"))cls="m";else if(p.startsWith("l")||p.startsWith("s"))cls="l";return '<span class="'+cls+'">'+escapeHtml(part.trim())+'</span>';}).join(", ");}
 
-charSelect.addEventListener("change",()=>{activeQuick="all";updateQuickUI();loadChar(charSelect.value);});
+charSelect.addEventListener("change",()=>{activeQuick="all";sortKey=null;updateQuickUI();loadChar(charSelect.value);});
 filterInput.addEventListener("input",render);
 quickfilters.querySelectorAll(".qf").forEach(btn=>btn.addEventListener("click",()=>{activeQuick=btn.dataset.f;updateQuickUI();render();}));
 function updateQuickUI(){quickfilters.querySelectorAll(".qf").forEach(b=>b.classList.toggle("on",b.dataset.f===activeQuick));}
 updateQuickUI();
 const urlChar=new URLSearchParams(location.search).get("char");
-if(urlChar&&ROSTER.includes(urlChar))charSelect.value=urlChar;
+if(urlChar&&ROSTER.find(c=>c.slug===urlChar))charSelect.value=urlChar;
 loadChar(charSelect.value);
 </script>
 </body>
