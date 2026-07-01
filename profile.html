@@ -34,6 +34,7 @@
   <a class="navlink" href="./framedata.html">Frame Data</a>
   <a class="navlink" href="./matchup.html">Matchups</a>
   <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
   <a class="navlink" href="./rank.html">Rank Guide</a>
   <a class="navlink" href="./dashboard.html">Dashboard</a>
   <span class="spacer"></span>
@@ -84,6 +85,22 @@
         <div class="frow two">
           <div><label>Favorite stage</label><input id="favorite_stage" maxlength="40" placeholder="optional"></div>
           <div><label>Favorite music</label><input id="favorite_music" maxlength="40" placeholder="optional"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Privacy</legend>
+        <div class="frow" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><label style="margin-bottom:2px">Public profile</label><div class="hint">Others can view your profile page at /u/&lt;username&gt;.</div></div>
+          <input type="checkbox" id="profile_public" style="width:auto;transform:scale(1.4)">
+        </div>
+        <div class="frow" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><label style="margin-bottom:2px">Show match history</label><div class="hint">Display your win rate &amp; record on your public profile.</div></div>
+          <input type="checkbox" id="show_matches" style="width:auto;transform:scale(1.4)">
+        </div>
+        <div class="frow" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+          <div><label style="margin-bottom:2px">Show Tekken ID</label><div class="hint">Let others see your Tekken ID on your profile (off by default).</div></div>
+          <input type="checkbox" id="show_tekken_id" style="width:auto;transform:scale(1.4)">
         </div>
       </fieldset>
 
@@ -150,6 +167,17 @@ function fillRankSelect(id){const sel=document.getElementById(id);sel.innerHTML=
     setv("playstyle",p.playstyle); setv("favorite_stage",p.favorite_stage); setv("favorite_music",p.favorite_music);
   }
 
+  // load privacy settings
+  try{
+    const pv=await TEK.api("/api/me/privacy");
+    if(pv.ok && pv.data && pv.data.privacy){
+      const pr=pv.data.privacy;
+      document.getElementById("profile_public").checked = pr.profile_public!==0;
+      document.getElementById("show_matches").checked = pr.show_matches!==0;
+      document.getElementById("show_tekken_id").checked = pr.show_tekken_id===1;
+    }
+  }catch(e){}
+
   document.getElementById("saveBtn").addEventListener("click", async ()=>{
     const msg=document.getElementById("saveMsg"); msg.textContent=""; msg.className="save-msg";
     const btn=document.getElementById("saveBtn"); btn.disabled=true; btn.textContent="Saving…";
@@ -170,6 +198,14 @@ function fillRankSelect(id){const sel=document.getElementById(id);sel.innerHTML=
       onboarded:1
     };
     const res=await TEK.api("/api/me/profile",{method:"POST",body:JSON.stringify(body)});
+    // also save privacy settings
+    try{
+      await TEK.api("/api/me/privacy",{method:"POST",body:JSON.stringify({
+        profile_public: document.getElementById("profile_public").checked,
+        show_matches: document.getElementById("show_matches").checked,
+        show_tekken_id: document.getElementById("show_tekken_id").checked
+      })});
+    }catch(e){}
     btn.disabled=false; btn.textContent="Save profile";
     if(res.ok){ msg.textContent="✓ Saved! Your dashboard is updated."; msg.className="save-msg ok"; }
     else { msg.textContent=(res.data&&res.data.error)?res.data.error:"Save failed."; msg.className="save-msg err"; }

@@ -83,11 +83,12 @@
   <a class="navlink" href="./framedata.html">Frame Data</a>
   <a class="navlink" href="./matchup.html">Matchups</a>
   <a class="navlink active" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
   <a class="navlink" href="./rank.html">Rank Guide</a>
   <a class="navlink" href="./dashboard.html">Dashboard</a>
   <a class="navlink" href="./resources.html">Resources</a>
   <span class="spacer"></span>
-  <a class="nav-cta" href="./framedata.html">Frame Data</a>
+  <span id="navAuth"></span>
 </nav>
 
 <div class="wrap">
@@ -120,6 +121,18 @@
 </footer>
 
 <script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+// mount Clerk user button / sign-in link in nav
+(async function(){
+  try{
+    const clerk=await TEK.initClerk();
+    const slot=document.getElementById("navAuth");
+    if(TEK.isSignedIn()){ const ub=document.createElement("div"); slot.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"}); }
+    else { slot.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; }
+  }catch(e){ document.getElementById("navAuth").innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; }
+})();
+</script>
 <script>
 const FRIENDS_KEY="lars_saved_friends";
 const idInput=document.getElementById("idInput"),goBtn=document.getElementById("goBtn"),loading=document.getElementById("loading"),errSlot=document.getElementById("errSlot"),result=document.getElementById("result"),friendsBox=document.getElementById("friends");
@@ -230,6 +243,23 @@ function render(data){
   if(saveBtn)saveBtn.addEventListener("click",()=>{saveFriend(data.id,name);saveBtn.textContent="✓ Saved";saveBtn.disabled=true;});
   const rawBtn=document.getElementById("rawBtn"),rawPre=document.getElementById("rawPre");
   if(rawBtn)rawBtn.addEventListener("click",()=>{const sh=rawPre.style.display==="block";rawPre.style.display=sh?"none":"block";rawBtn.textContent=sh?"view raw data":"hide raw data";});
+
+  // "who linked this ID" — is this Tekken ID claimed by a TEK-1 user?
+  (async function(){
+    try{
+      const r=await fetch("/api/linked?tekken_id="+encodeURIComponent(data.id));
+      const lk=await r.json();
+      if(lk && lk.linked){
+        const pinfo=document.querySelector(".phead .pinfo");
+        if(pinfo){
+          const badge=document.createElement("div");
+          badge.style.cssText="margin-top:10px;display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);border:1px solid rgba(77,159,255,.3);border-radius:999px;padding:5px 13px;font-size:.82rem;color:var(--accent);font-weight:600";
+          badge.innerHTML='🔗 This is <strong style="color:var(--ink)">'+escapeHtml(lk.username)+'</strong> on TEK-1'+(lk.main?' · mains '+escapeHtml(lk.main):'');
+          pinfo.appendChild(badge);
+        }
+      }
+    }catch(e){}
+  })();
 }
 
 goBtn.addEventListener("click",lookup);

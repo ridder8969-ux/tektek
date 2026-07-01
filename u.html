@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .prof-head{background:linear-gradient(140deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius-lg);padding:28px;display:flex;gap:22px;align-items:center;flex-wrap:wrap;position:relative;overflow:hidden}
+  .prof-head::before{content:'';position:absolute;top:-40%;right:-5%;width:320px;height:320px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
+  .prof-avatar{width:96px;height:96px;border-radius:50%;border:1px solid var(--line);flex:none;position:relative;z-index:1}
+  .prof-info{position:relative;z-index:1;flex:1;min-width:200px}
+  .prof-name{font-size:2rem;font-weight:800;line-height:1}
+  .prof-rank{color:var(--accent);font-weight:700;margin-top:5px}
+  .prof-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.84rem;color:var(--ink-dim)}
+  .prof-actions{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap}
+
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:16px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .stat .label{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+  .stat .value{font-weight:800;font-size:1.5rem}
+  .stat .value.win{color:var(--good)}
+  .chars{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .chartag{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px;font-size:.88rem}
+  .chartag img{width:32px;height:32px;border-radius:50%;flex:none}
+  .chartag .role{color:var(--ink-faint);font-size:.72rem}
+  .state{text-align:center;margin:60px auto;color:var(--ink-dim)}
+  .errbox{background:var(--bad-soft);border:1px solid rgba(240,102,75,.4);border-radius:var(--radius);padding:18px;color:#f6c9bd;max-width:520px;margin:40px auto;text-align:center}
+  .private-note{text-align:center;color:var(--ink-dim);margin:40px auto;max-width:420px}
+  .section-h{font-weight:700;font-size:1.15rem;margin:28px 0 12px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
+</nav>
+
+<div class="wrap">
+  <div class="state" id="loading"><div class="spinner"></div>Loading profile…</div>
+  <div id="errSlot"></div>
+  <div id="prof" style="display:none"></div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>Community profiles. Not affiliated with Bandai Namco.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./community.html">Community</a></div>
+    <div class="fcol"><h4>Account</h4><a href="./dashboard.html">Dashboard</a><a href="./profile.html">Edit Profile</a></div>
+  </div>
+  <div class="fbar">TEKKEN® 8 © Bandai Namco. Not affiliated.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+const loading=document.getElementById("loading"),errSlot=document.getElementById("errSlot"),prof=document.getElementById("prof"),navAuth=document.getElementById("navAuth");
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pretty(s){if(!s)return "";return String(s).split(/[_-]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}
+
+let signedIn=false, clerkRef=null;
+(async function(){
+  try{ clerkRef=await TEK.initClerk(); signedIn=TEK.isSignedIn();
+    if(signedIn){ const ub=document.createElement("div"); navAuth.appendChild(ub); clerkRef.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"}); }
+    else navAuth.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>';
+  }catch(e){ navAuth.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; }
+
+  const username=new URLSearchParams(location.search).get("user");
+  if(!username){ loading.style.display="none"; errSlot.innerHTML='<div class="errbox">No user specified.</div>'; return; }
+  load(username);
+})();
+
+async function load(username){
+  loading.style.display="block"; errSlot.innerHTML=""; prof.style.display="none";
+  const res=await TEK.api("/api/profile-view?username="+encodeURIComponent(username));
+  loading.style.display="none";
+  if(!res.ok || !res.data || res.data.error){ errSlot.innerHTML='<div class="errbox">'+esc((res.data&&res.data.error)||"Couldn't load profile.")+'</div>'; return; }
+  render(res.data);
+}
+
+function render(d){
+  const name=d.username;
+  if(d.private){
+    prof.style.display="block";
+    prof.innerHTML='<div class="prof-head"><div class="prof-avatar-slot" id="av"></div><div class="prof-info"><div class="prof-name">'+esc(name)+'</div><div class="prof-meta">This profile is private.</div></div><div class="prof-actions" id="actions"></div></div>';
+    document.getElementById("av").outerHTML=TekAssets.initialBlock(name,96,"#4d9fff");
+    renderActions(d);
+    return;
+  }
+  const p=d.profile||{}, s=d.stats||null;
+  let h='<div class="prof-head">';
+  h+='<img class="prof-avatar" id="avatarImg" src="'+TekAssets.charImg(p.main_character||"lars")+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(name)+'\',96,\'#4d9fff\')">';
+  h+='<div class="prof-info"><div class="prof-name">'+esc(name)+'</div>'+
+     (p.current_rank?'<div class="prof-rank">'+esc(p.current_rank)+'</div>':'')+
+     '<div class="prof-meta">'+
+       (p.main_character?'<span>Mains <strong style="color:var(--ink)">'+esc(pretty(p.main_character))+'</strong></span>':'')+
+       (p.playstyle?'<span>'+esc(pretty(p.playstyle))+'</span>':'')+
+       (p.country?'<span>'+esc(p.country)+'</span>':'')+
+       (p.platform?'<span>'+esc(pretty(p.platform))+'</span>':'')+
+     '</div></div>';
+  h+='<div class="prof-actions" id="actions"></div>';
+  h+='</div>';
+
+  if(s){
+    h+='<div class="grid">';
+    h+='<div class="stat"><div class="label">Win Rate</div><div class="value win">'+s.win_rate+'%</div></div>';
+    h+='<div class="stat"><div class="label">Record</div><div class="value"><span style="color:var(--good)">'+s.wins+'W</span> / <span style="color:var(--bad)">'+s.losses+'L</span></div></div>';
+    h+='<div class="stat"><div class="label">Matches</div><div class="value">'+s.total+'</div></div>';
+    h+='</div>';
+  }
+
+  const secs=[["Secondary",p.secondary_1],["Secondary",p.secondary_2],["Secondary",p.secondary_3]].filter(x=>x[1]);
+  if(p.main_character || secs.length){
+    h+='<div class="section-h">Characters</div><div class="chars">';
+    if(p.main_character) h+=charTag("Main",p.main_character);
+    secs.forEach(x=>h+=charTag("Secondary",x[1]));
+    h+='</div>';
+  }
+  if(p.tekken_id){
+    h+='<div class="section-h">Tekken ID</div><div class="stat" style="max-width:280px"><div class="value" style="font-size:1.05rem;font-family:JetBrains Mono,monospace">'+esc(p.tekken_id)+'</div><a href="./player.html?id='+esc(p.tekken_id)+'" style="color:var(--accent);text-decoration:none;font-size:.82rem">View EWGF stats →</a></div>';
+  }
+  prof.innerHTML=h; prof.style.display="block";
+  renderActions(d);
+}
+function charTag(role,slug){
+  return '<div class="chartag"><img src="'+TekAssets.charImg(slug)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(pretty(slug))+'\',32,\'#4d9fff\')"><span>'+esc(pretty(slug))+' <span class="role">'+role+'</span></span></div>';
+}
+
+function renderActions(d){
+  const a=document.getElementById("actions"); if(!a) return;
+  if(d.is_self){ a.innerHTML='<a class="btn btn-ghost" href="./profile.html">Edit profile</a>'; return; }
+  if(!signedIn){ a.innerHTML='<a class="btn" href="./dashboard.html">Sign in to add friend</a>'; return; }
+  const st=d.friend_status;
+  if(st==="friends") a.innerHTML='<span class="btn btn-ghost" style="cursor:default">✓ Friends</span> <button class="btn btn-ghost" id="rmBtn">Remove</button>';
+  else if(st==="outgoing") a.innerHTML='<span class="btn btn-ghost" style="cursor:default">Request sent</span>';
+  else if(st==="incoming") a.innerHTML='<button class="btn" id="acceptBtn">Accept request</button>';
+  else if(st==="blocked") a.innerHTML='<span class="btn btn-ghost" style="cursor:default">Blocked</span>';
+  else a.innerHTML='<button class="btn" id="addBtn">+ Add friend</button>';
+
+  const add=document.getElementById("addBtn"), acc=document.getElementById("acceptBtn"), rm=document.getElementById("rmBtn");
+  if(add) add.addEventListener("click",()=>friendAction("request",d.username,add));
+  if(acc) acc.addEventListener("click",()=>friendAction("accept",d.username,acc));
+  if(rm) rm.addEventListener("click",()=>friendAction("remove",d.username,rm));
+}
+async function friendAction(action,username,btn){
+  if(btn){ btn.disabled=true; btn.textContent="…"; }
+  const res=await TEK.api("/api/me/friends",{method:"POST",body:JSON.stringify({action,username})});
+  // reload profile to reflect new state
+  load(username);
+}
+</script>
+</body>
+</html>

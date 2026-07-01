@@ -47,11 +47,12 @@
   <a class="navlink" href="./framedata.html">Frame Data</a>
   <a class="navlink" href="./matchup.html">Matchups</a>
   <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
   <a class="navlink active" href="./rank.html">Rank Guide</a>
   <a class="navlink" href="./dashboard.html">Dashboard</a>
   <a class="navlink" href="./resources.html">Resources</a>
   <span class="spacer"></span>
-  <a class="nav-cta" href="./player.html">Look up a player</a>
+  <span id="navAuth"></span>
 </nav>
 
 <div class="wrap">
@@ -209,6 +210,18 @@ function showCoach(rank){
 }
 
 rankSelect.addEventListener("change",()=>showCoach(rankSelect.value));
+</script>
+<script src="./tek-auth.js"></script>
+<script>
+(async function(){
+  try{
+    const clerk=await TEK.initClerk();
+    const slot=document.getElementById("navAuth");
+    if(!slot) return;
+    if(TEK.isSignedIn()){ const ub=document.createElement("div"); slot.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"}); }
+    else { slot.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; }
+  }catch(e){ const s=document.getElementById("navAuth"); if(s) s.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; }
+})();
 </script>
 </body>
 </html>

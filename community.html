@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .find-row{display:flex;gap:10px;margin:20px 0;max-width:520px;flex-wrap:wrap}
+  .find-row input{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-size:.95rem;padding:12px 14px;border-radius:var(--radius-sm);outline:none}
+  .find-row input:focus{border-color:var(--accent)}
+  .find-msg{font-size:.85rem;margin-top:-8px;margin-bottom:12px}
+  .find-msg.err{color:var(--bad)} .find-msg.ok{color:var(--good)}
+
+  .section-h{font-weight:700;font-size:1.15rem;margin:26px 0 12px;display:flex;align-items:center;gap:8px}
+  .count-pill{font-family:'JetBrains Mono',monospace;font-size:.7rem;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:999px}
+
+  .u-list{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .u-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px}
+  .u-card img{width:44px;height:44px;border-radius:50%;flex:none}
+  .u-body{flex:1;min-width:0}
+  .u-name{font-weight:700;font-size:.98rem}
+  .u-name a{color:inherit;text-decoration:none}
+  .u-name a:hover{color:var(--accent)}
+  .u-sub{color:var(--ink-faint);font-size:.76rem;margin-top:1px}
+  .u-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .u-btn{font-size:.76rem;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg2);color:var(--ink-dim);cursor:pointer}
+  .u-btn.primary{background:var(--accent);color:#06101c;border-color:var(--accent);font-weight:600}
+  .u-btn:hover{border-color:var(--accent-dim)}
+
+  .empty{color:var(--ink-faint);font-size:.88rem;padding:16px 0}
+  .loadingwrap{text-align:center;margin:40px auto;color:var(--ink-dim)}
+  .auth-gate{max-width:440px;margin:70px auto;text-align:center}
+  .auth-gate h1{font-size:1.5rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink active" href="./community.html">Community</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Community</div>
+  <h1 class="page">Friends</h1>
+  <p class="lead">Find other players by username, send friend requests, and check out their profiles.</p>
+
+  <div class="loadingwrap" id="loading"><div class="spinner"></div>Loading…</div>
+  <div class="auth-gate" id="gate" style="display:none"><h1>Sign in to use Community</h1><p style="color:var(--ink-dim)">You need an account to add friends.</p><a class="btn" href="./dashboard.html">Sign in</a></div>
+
+  <div id="app" style="display:none">
+    <div class="find-row">
+      <input id="findInput" placeholder="Find a player by username…" autocomplete="off">
+      <button class="btn" id="findBtn">Find</button>
+    </div>
+    <div class="find-msg" id="findMsg"></div>
+    <div id="findResult"></div>
+
+    <div id="incomingWrap"></div>
+    <div id="outgoingWrap"></div>
+    <div id="friendsWrap"></div>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>Find your crew. Add friends, see profiles.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./matchup.html">Matchups</a></div>
+    <div class="fcol"><h4>Account</h4><a href="./dashboard.html">Dashboard</a><a href="./profile.html">Edit Profile</a></div>
+  </div>
+  <div class="fbar">TEKKEN® 8 © Bandai Namco. Not affiliated.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+const loading=document.getElementById("loading"),gate=document.getElementById("gate"),app=document.getElementById("app"),navAuth=document.getElementById("navAuth");
+const findInput=document.getElementById("findInput"),findBtn=document.getElementById("findBtn"),findMsg=document.getElementById("findMsg"),findResult=document.getElementById("findResult");
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pretty(s){if(!s)return "";return String(s).split(/[_-]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}
+
+(async function(){
+  let clerk;
+  try{ clerk=await TEK.initClerk(); }catch(e){ loading.innerHTML='<div class="errbox" style="margin:0 auto">Sign-in failed to load.</div>'; return; }
+  loading.style.display="none";
+  if(!TEK.isSignedIn()){ gate.style.display="block"; navAuth.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>'; return; }
+  const ub=document.createElement("div"); navAuth.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"});
+  app.style.display="block";
+  loadFriends();
+})();
+
+findBtn.addEventListener("click",find);
+findInput.addEventListener("keydown",e=>{if(e.key==="Enter")find();});
+
+async function find(){
+  const uname=findInput.value.trim();
+  findMsg.textContent=""; findResult.innerHTML="";
+  if(!uname){ findMsg.textContent="Enter a username."; findMsg.className="find-msg err"; return; }
+  const res=await TEK.api("/api/profile-view?username="+encodeURIComponent(uname));
+  if(!res.ok || !res.data || res.data.error){ findMsg.textContent=(res.data&&res.data.error)||"No player found."; findMsg.className="find-msg err"; return; }
+  const d=res.data;
+  findResult.innerHTML='<div class="u-list">'+userCard({username:d.username,main:(d.profile&&d.profile.main_character),rank:(d.profile&&d.profile.current_rank)}, d.is_self?"self":d.friend_status)+'</div>';
+  wireCardButtons(findResult);
+}
+
+async function loadFriends(){
+  const res=await TEK.api("/api/me/friends");
+  const d=res.ok?res.data:{friends:[],incoming:[],outgoing:[]};
+  const inc=document.getElementById("incomingWrap"), out=document.getElementById("outgoingWrap"), fr=document.getElementById("friendsWrap");
+
+  // incoming requests
+  if(d.incoming && d.incoming.length){
+    inc.innerHTML='<div class="section-h">Friend Requests <span class="count-pill">'+d.incoming.length+'</span></div><div class="u-list">'+
+      d.incoming.map(u=>userCard(u,"incoming")).join("")+'</div>';
+  } else inc.innerHTML='';
+
+  // friends
+  fr.innerHTML='<div class="section-h">Your Friends '+(d.friends&&d.friends.length?'<span class="count-pill">'+d.friends.length+'</span>':'')+'</div>'+
+    (d.friends&&d.friends.length? '<div class="u-list">'+d.friends.map(u=>userCard(u,"friends")).join("")+'</div>' : '<div class="empty">No friends yet. Find players above and send a request.</div>');
+
+  // outgoing
+  if(d.outgoing && d.outgoing.length){
+    out.innerHTML='<div class="section-h">Sent Requests</div><div class="u-list">'+d.outgoing.map(u=>userCard(u,"outgoing")).join("")+'</div>';
+  } else out.innerHTML='';
+
+  wireCardButtons(document.getElementById("app"));
+}
+
+function userCard(u,status){
+  const slug=(u.main||"lars");
+  const img='<img src="'+TekAssets.charImg(slug)+'" alt="" onerror="this.outerHTML=TekAssets.initialBlock(\''+esc(u.username)+'\',44,\'#4d9fff\')">';
+  let actions="";
+  if(status==="self") actions='<span class="u-sub">This is you</span>';
+  else if(status==="friends") actions='<button class="u-btn" data-act="remove" data-u="'+esc(u.username)+'">Remove</button>';
+  else if(status==="incoming") actions='<button class="u-btn primary" data-act="accept" data-u="'+esc(u.username)+'">Accept</button><button class="u-btn" data-act="remove" data-u="'+esc(u.username)+'">Decline</button>';
+  else if(status==="outgoing") actions='<span class="u-sub">Request sent</span><button class="u-btn" data-act="remove" data-u="'+esc(u.username)+'">Cancel</button>';
+  else actions='<button class="u-btn primary" data-act="request" data-u="'+esc(u.username)+'">+ Add</button>';
+  return '<div class="u-card">'+img+'<div class="u-body"><div class="u-name"><a href="./u.html?user='+encodeURIComponent(u.username)+'">'+esc(u.username)+'</a></div>'+
+    '<div class="u-sub">'+(u.main?esc(pretty(u.main)):"")+(u.rank?' · '+esc(u.rank):"")+'</div>'+
+    '<div class="u-actions">'+actions+'</div></div></div>';
+}
+
+function wireCardButtons(root){
+  root.querySelectorAll("[data-act]").forEach(b=>{
+    b.addEventListener("click",async()=>{
+      const act=b.dataset.act, u=b.dataset.u;
+      b.disabled=true; b.textContent="…";
+      await TEK.api("/api/me/friends",{method:"POST",body:JSON.stringify({action:act,username:u})});
+      loadFriends();
+      findResult.innerHTML=""; findInput.value=""; findMsg.textContent="";
+    });
+  });
+}
+</script>
+</body>
+</html>

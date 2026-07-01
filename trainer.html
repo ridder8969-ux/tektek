@@ -3,1198 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LARS — Lightning Trainer</title>
+<title>Trainer — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+  .tr-head{display:flex;align-items:center;gap:16px;margin:8px 0 8px;flex-wrap:wrap}
+  .tr-head img{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);flex:none}
+  .tr-head .nm{font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .tr-head .sub{color:var(--ink-dim);font-size:.88rem;margin-top:3px}
+  .tr-switch{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tr-switch label{font-size:.78rem;color:var(--ink-faint)}
+  .tr-switch select{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:.9rem;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer}
 
-  :root{
-    --bg:#0b0e14;
-    --bg2:#0e1219;
-    --panel:#141823;
-    --panel-hi:#1a1f2c;
-    --ink:#eef1f6;
-    --ink-dim:#98a2b3;
-    --ink-faint:#5e6776;
-    --volt:#4d9fff;
-    --volt-deep:#2f6dba;
-    --danger:#f0664b;
-    --danger-bg:rgba(240,102,75,0.12);
-    --safe:#3ecf8e;
-    --warn:#e8b53e;
-    --line:#222a39;
-    --xb-x:#5b8def;
-    --xb-y:#d4a82a;
-    --xb-a:#4a9d5e;
-    --xb-b:#cc4f44;
-  }
+  .signin-note{background:var(--accent-soft);border:1px solid rgba(77,159,255,0.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;font-size:.9rem;color:var(--ink-dim)}
+  .signin-note a{color:var(--accent);text-decoration:none;font-weight:600}
 
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(25,212,255,0.08), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(25,212,255,0.05), transparent 55%),
-      var(--bg);
-    color:var(--ink);
-    font-family:'Inter',system-ui,sans-serif;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-    padding-bottom:80px;
-  }
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0;border-bottom:1px solid var(--line);padding-bottom:0}
+  .tab{font-size:.86rem;font-weight:600;color:var(--ink-dim);padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
 
-  /* ---------- HERO ---------- */
-  header.hero{
-    position:relative;
-    padding:54px 24px 30px;
-    text-align:center;
-    overflow:hidden;
-    border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg, var(--bg2), var(--bg));
-  }
-  .bolt-bg{
-    position:absolute;inset:0;
-    background-image:
-      linear-gradient(115deg, transparent 49.7%, rgba(77,159,255,0.04) 49.85%, rgba(77,159,255,0.04) 50.15%, transparent 50.3%);
-    background-size:180px 100%;
-    opacity:.5;
-    pointer-events:none;
-  }
-  .eyebrow{
-    font-family:'JetBrains Mono',monospace;
-    letter-spacing:.42em;
-    text-transform:uppercase;
-    font-size:.66rem;
-    color:var(--volt);
-    margin-bottom:14px;
-    position:relative;
-  }
-  h1{
-    font-family:'Inter',sans-serif;
-    font-weight:700;
-    font-size:clamp(2.2rem,6vw,3.4rem);
-    line-height:1.05;
-    letter-spacing:-.02em;
-    position:relative;
-    text-shadow:none;
-  }
-  h1 .spark{color:var(--volt)}
-  .subtitle{
-    color:var(--ink-dim);
-    max-width:560px;
-    margin:16px auto 0;
-    font-size:.98rem;
-    position:relative;
-  }
-  .patch-pill{
-    display:inline-flex;gap:8px;align-items:center;
-    margin-top:20px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.7rem;
-    color:var(--warn);
-    background:rgba(255,210,63,0.08);
-    border:1px solid rgba(255,210,63,0.3);
-    border-radius:999px;
-    padding:6px 14px;
-    position:relative;
-  }
-  .patch-pill::before{content:'⚡';font-size:.8rem}
+  .panel{display:none}
+  .panel.on{display:block}
+  .panel-intro{color:var(--ink-dim);font-size:.92rem;margin-bottom:16px;max-width:680px}
+  .panel-intro strong{color:var(--ink)}
 
-  /* ---------- CONTROLLER LEGEND ---------- */
-  .legend{
-    max-width:1080px;margin:26px auto 0;padding:0 20px;
-    display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
-  }
-  .legend .lg{
-    display:flex;align-items:center;gap:9px;
-    background:var(--panel);border:1px solid var(--line);
-    padding:8px 14px 8px 8px;border-radius:10px;font-size:.84rem;
-  }
-  .legend .lbl{color:var(--ink-dim)}
+  .move-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .move{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px}
+  .move .mc{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.95rem;color:var(--ink)}
+  .move .mn{color:var(--ink-faint);font-size:.74rem;margin-top:1px}
+  .move .mstats{display:flex;gap:10px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:.72rem}
+  .move .mstats .st{color:var(--ink-dim)}
+  .move .mstats .st b{color:var(--ink);font-weight:600}
+  .move .mstats .blk.plus{color:var(--good)} .move .mstats .blk.minus{color:var(--warn)} .move .mstats .blk.bigminus{color:var(--bad)}
+  .move .mnote{color:var(--ink-faint);font-size:.72rem;margin-top:7px;line-height:1.4}
 
-  /* hub cards */
-  .hub{
-    max-width:880px;margin:26px auto 0;padding:0 20px;
-    display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    position:relative;
-  }
-  .hub a{
-    text-decoration:none;background:linear-gradient(160deg,var(--panel-hi),var(--panel));
-    border:1px solid var(--line);border-radius:14px;padding:18px;text-align:left;
-    transition:all .15s ease;display:block;
-  }
-  .hub a:hover{border-color:var(--volt);transform:translateY(-3px);box-shadow:0 8px 30px rgba(25,212,255,0.12)}
-  .hub a.current{border-color:var(--volt-deep);background:linear-gradient(160deg,rgba(25,212,255,0.1),var(--panel))}
-  .hub .hicon{font-size:1.5rem;margin-bottom:8px}
-  .hub .htitle{font-family:'Inter';font-weight:700;font-size:1.15rem;color:var(--ink);margin-bottom:4px}
-  .hub .hdesc{color:var(--ink-dim);font-size:.84rem;line-height:1.45}
-  .hub .hbadge{
-    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.6rem;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--volt);
-    background:rgba(25,212,255,0.12);border:1px solid rgba(25,212,255,0.3);
-    padding:2px 7px;border-radius:5px;margin-top:8px;
-  }
+  .pun-list{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .pun{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius-sm);padding:12px 14px}
+  .pun .pw{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent);font-weight:600}
+  .pun .pc{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:1rem;margin-top:3px}
+  .pun .pmeta{color:var(--ink-faint);font-size:.72rem;margin-top:4px}
 
-  /* Xbox button pill */
-  .xb{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:26px;height:26px;border-radius:50%;
-    font-family:'Inter',sans-serif;font-weight:700;font-size:.95rem;
-    color:#06101c;flex:none;
-    box-shadow:0 2px 0 rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.4);
-  }
-  .xb.x{background:var(--xb-x);color:#fff}
-  .xb.y{background:var(--xb-y)}
-  .xb.a{background:var(--xb-a);color:#fff}
-  .xb.b{background:var(--xb-b);color:#fff}
-  .xb.dir{
-    width:auto;height:24px;border-radius:7px;padding:0 9px;
-    background:#26344c;color:var(--volt);font-size:.74rem;font-weight:700;
-    letter-spacing:.04em;box-shadow:none;border:1px solid var(--line);
-    font-family:'JetBrains Mono',monospace;
-  }
-  .combo-row{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}
-  .combo-row .plus{color:var(--ink-faint);font-weight:700;font-size:.8rem}
-  .combo-row .arrow{color:var(--volt-deep);font-weight:700;padding:0 2px}
-
-  /* ---------- NAV TABS ---------- */
-  nav.tabs{
-    position:sticky;top:0;z-index:50;
-    background:rgba(10,14,20,0.92);
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--line);
-    padding:10px 14px;
-    display:flex;gap:6px;overflow-x:auto;justify-content:flex-start;
-    scrollbar-width:none;
-  }
-  nav.tabs::-webkit-scrollbar{display:none}
-  nav.tabs .inner{display:flex;gap:6px;margin:0 auto}
-  .tab{
-    font-family:'Inter',sans-serif;font-weight:600;font-size:.92rem;
-    letter-spacing:.03em;
-    color:var(--ink-dim);background:transparent;border:1px solid transparent;
-    padding:8px 16px;border-radius:9px;cursor:pointer;white-space:nowrap;
-    transition:all .15s ease;
-  }
-  .tab:hover{color:var(--ink);background:var(--panel)}
-  .tab.active{
-    color:var(--ink);background:var(--panel-hi);
-    box-shadow:none;border-color:var(--line);
-  }
-
-  /* ---------- LAYOUT ---------- */
-  main{max-width:1080px;margin:0 auto;padding:30px 20px 0}
-  .panel-view{display:none;animation:fade .25s ease}
-  .panel-view.active{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-  .section-head{
-    display:flex;align-items:baseline;gap:14px;margin:6px 0 18px;
-    flex-wrap:wrap;
-  }
-  .section-head h2{
-    font-family:'Inter',sans-serif;font-weight:700;
-    font-size:1.9rem;letter-spacing:.02em;
-  }
-  .section-head .tag{
-    font-family:'JetBrains Mono',monospace;font-size:.7rem;
-    color:var(--volt);letter-spacing:.1em;text-transform:uppercase;
-  }
-  .lead{color:var(--ink-dim);max-width:680px;margin-bottom:24px;font-size:.96rem}
-  .lead strong{color:var(--ink)}
-
-  /* ---------- CARDS ---------- */
-  .grid{display:grid;gap:14px}
-  .grid.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-  .grid.three{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-
-  .card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:18px;
-    position:relative;
-    transition:border-color .15s ease, transform .15s ease;
-  }
-  .card:hover{border-color:var(--volt-deep);transform:translateY(-2px)}
-  .card .move-name{
-    font-family:'Inter',sans-serif;font-weight:700;font-size:1.15rem;
-    margin-bottom:3px;
-  }
-  .card .desc{color:var(--ink-dim);font-size:.88rem;margin-top:9px}
-  .card .inputs{margin:10px 0 4px}
-  .frames{
-    font-family:'JetBrains Mono',monospace;font-size:.72rem;
-    color:var(--ink-faint);margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;
-  }
-  .frames b{color:var(--volt)}
-
-  /* risk strips */
-  .card.safe-move{border-left:3px solid var(--safe)}
-  .card.danger-move{border-left:3px solid var(--danger)}
-  .card.key-move{border-left:3px solid var(--volt)}
-
-  .badge{
-    display:inline-block;font-family:'JetBrains Mono',monospace;
-    font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
-    padding:3px 8px;border-radius:6px;margin-bottom:8px;font-weight:700;
-  }
-  .badge.launcher{background:rgba(25,212,255,0.15);color:var(--volt);border:1px solid rgba(25,212,255,0.3)}
-  .badge.poke{background:rgba(43,217,122,0.12);color:var(--safe);border:1px solid rgba(43,217,122,0.3)}
-  .badge.risky{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(255,106,43,0.35)}
-  .badge.punish{background:rgba(255,210,63,0.12);color:var(--warn);border:1px solid rgba(255,210,63,0.3)}
-
-  /* ---------- PUNISH TABLE ---------- */
-  .ptable{
-    background:var(--panel);border:1px solid var(--line);
-    border-radius:14px;overflow:hidden;margin-bottom:18px;
-  }
-  .ptable .pt-head{
-    background:var(--panel-hi);padding:13px 18px;
-    font-family:'Inter',sans-serif;font-weight:700;font-size:1.1rem;
-    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;
-  }
-  .ptable .pt-head .ic{font-size:1.1rem}
-  .prow{
-    display:grid;grid-template-columns:88px 1fr auto;gap:14px;align-items:center;
-    padding:13px 18px;border-bottom:1px solid var(--line);
-  }
-  .prow:last-child{border-bottom:none}
-  .prow:hover{background:var(--panel-hi)}
-  .prow .when{
-    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.82rem;
-    color:var(--ink-dim);
-  }
-  .prow .note{color:var(--ink-faint);font-size:.8rem;margin-top:3px}
-  .prow.launch .when{color:var(--volt)}
-  .prow.launch{background:rgba(25,212,255,0.04)}
-
-  /* ---------- CALLOUT ---------- */
-  .callout{
-    border-radius:14px;padding:18px 20px;margin:8px 0 20px;
-    border:1px solid;font-size:.92rem;
-  }
-  .callout .co-title{
-    font-family:'Inter',sans-serif;font-weight:700;font-size:1.05rem;
-    margin-bottom:6px;display:flex;align-items:center;gap:9px;
-  }
-  .callout.warn{background:var(--danger-bg);border-color:rgba(255,106,43,0.35)}
-  .callout.warn .co-title{color:var(--danger)}
-  .callout.info{background:rgba(25,212,255,0.06);border-color:rgba(25,212,255,0.25)}
-  .callout.info .co-title{color:var(--volt)}
-  .callout.cue{background:rgba(43,217,122,0.07);border-color:rgba(43,217,122,0.3)}
-  .callout.cue .co-title{color:var(--safe)}
-  .callout p{color:var(--ink-dim)}
-  .callout strong{color:var(--ink)}
-
-  /* big in-match cue */
-  .mantra{
-    text-align:center;font-family:'Inter',sans-serif;font-weight:700;
-    font-size:clamp(1.4rem,4vw,2rem);color:var(--ink);
-    letter-spacing:.01em;margin:6px 0;
-  }
-  .mantra .sep{color:var(--volt);margin:0 10px}
-
-  /* ---------- COMBO LIST ---------- */
-  .combo-card{
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:16px 18px;margin-bottom:13px;
-  }
-  .combo-card .cc-label{
-    font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.06em;
-    color:var(--volt);text-transform:uppercase;margin-bottom:10px;
-  }
-  .combo-card .cc-flow{font-size:1.02rem}
-  .combo-card .cc-note{color:var(--ink-faint);font-size:.82rem;margin-top:9px}
-
-  /* ---------- STANCE ---------- */
-  .stance-card{
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:18px;
-  }
-  .stance-card h3{
-    font-family:'Inter',sans-serif;font-weight:700;font-size:1.3rem;
-    color:var(--volt);margin-bottom:4px;
-  }
-  .stance-card .enter{
-    font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-faint);
-    margin-bottom:12px;
-  }
-  .stance-card ul{list-style:none}
-  .stance-card li{
-    padding:9px 0;border-bottom:1px solid var(--line);
-    display:flex;justify-content:space-between;align-items:center;gap:12px;
-  }
-  .stance-card li:last-child{border-bottom:none}
-  .stance-card li .sm-name{font-weight:600;font-size:.92rem}
-  .stance-card li .sm-desc{color:var(--ink-faint);font-size:.78rem;display:block;margin-top:2px}
-
-  /* ---------- PLAN STEPS ---------- */
-  .week{margin-bottom:22px}
-  .week .wk-head{
-    font-family:'Inter',sans-serif;font-weight:700;font-size:1.25rem;
-    color:var(--volt);margin-bottom:12px;display:flex;align-items:center;gap:12px;
-  }
-  .week .wk-num{
-    width:30px;height:30px;border-radius:8px;background:var(--volt);color:#06101c;
-    display:inline-flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:1rem;flex:none;
-  }
-  .step{
-    background:var(--panel);border:1px solid var(--line);border-radius:11px;
-    padding:14px 16px;margin-bottom:10px;display:flex;gap:13px;align-items:flex-start;
-  }
-  .step .chk{
-    width:22px;height:22px;border-radius:6px;border:2px solid var(--volt-deep);
-    flex:none;margin-top:1px;cursor:pointer;transition:all .15s;
-    display:flex;align-items:center;justify-content:center;color:transparent;font-size:.8rem;
-  }
-  .step .chk.done{background:var(--volt);border-color:var(--volt);color:#06101c}
-  .step .step-body{font-size:.92rem}
-  .step .step-body .st-title{font-weight:600;color:var(--ink)}
-  .step.done .step-body{opacity:.5;text-decoration:line-through}
-
-  /* footer */
-  footer{
-    max-width:1080px;margin:50px auto 0;padding:24px 20px;
-    border-top:1px solid var(--line);color:var(--ink-faint);font-size:.8rem;
-    text-align:center;
-  }
-  footer a{color:var(--volt-deep);text-decoration:none}
-
-  /* mobile */
-  @media(max-width:560px){
-    .prow{grid-template-columns:70px 1fr;gap:8px}
-    .prow .press{grid-column:1 / -1;margin-top:4px}
-    .legend .lg{font-size:.78rem}
-    main{padding:22px 14px 0}
-  }
+  .state{text-align:center;margin:40px auto;color:var(--ink-dim)}
+  .empty{color:var(--ink-faint);font-size:.88rem;padding:20px;text-align:center}
+  .deeplink{background:var(--accent-soft);border:1px solid rgba(77,159,255,.25);border-radius:var(--radius);padding:14px 16px;margin-top:14px;font-size:.88rem}
+  .deeplink a{color:var(--accent);text-decoration:none;font-weight:600}
 </style>
 </head>
 <body>
 
-<nav style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:4px;padding:0 22px;height:56px;background:rgba(12,14,18,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)">
-  <a href="./index.html" style="font-family:'Inter',sans-serif;font-weight:800;font-size:1.06rem;letter-spacing:-.02em;margin-right:22px;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--volt),var(--volt-deep));display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;font-weight:800;flex:none">L</span>Lightning Trainer</a>
-  <a href="./trainer.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink);background:var(--panel-hi);text-decoration:none;padding:7px 13px;border-radius:7px">Trainer</a>
-  <a href="./framedata.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink-dim);text-decoration:none;padding:7px 13px;border-radius:7px">Frame Data</a>
-  <a href="./matchup.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink-dim);text-decoration:none;padding:7px 13px;border-radius:7px">Matchups</a>
-  <a href="./player.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink-dim);text-decoration:none;padding:7px 13px;border-radius:7px">Player Lookup</a>
-  <a href="./rank.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink-dim);text-decoration:none;padding:7px 13px;border-radius:7px">Rank Guide</a>
-  <a href="./resources.html" style="font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;color:var(--ink-dim);text-decoration:none;padding:7px 13px;border-radius:7px">Resources</a>
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">L</span>Lightning Trainer</a>
+  <a class="navlink active" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
 </nav>
 
-<header class="hero">
-  <div class="bolt-bg"></div>
-  <div class="eyebrow">Tekken 8 · Rank Grinder Edition</div>
-  <h1>LARS<span class="spark">.</span></h1>
-  <p class="subtitle">Your lightning playbook. Built for Xbox, color-coded for risk. Blue means it's your turn — <span style="color:var(--danger)">orange means you get launched if it's blocked.</span></p>
-  <div class="patch-pill">Frame data: S2 v2.06 · neutral &amp; punishes current · verify Heat routes in S3</div>
-
-  <div class="legend">
-    <div class="lg"><span class="xb x">X</span><span class="lbl">Left Punch · <b style="color:var(--ink)">1</b></span></div>
-    <div class="lg"><span class="xb y">Y</span><span class="lbl">Right Punch · <b style="color:var(--ink)">2</b></span></div>
-    <div class="lg"><span class="xb a">A</span><span class="lbl">Left Kick · <b style="color:var(--ink)">3</b></span></div>
-    <div class="lg"><span class="xb b">B</span><span class="lbl">Right Kick · <b style="color:var(--ink)">4</b></span></div>
+<div class="wrap">
+  <div class="eyebrow">Your Personal Trainer</div>
+  <div class="tr-head">
+    <img id="trImg" src="./assets.js" alt="" style="display:none">
+    <div>
+      <div class="nm" id="trName">Trainer</div>
+      <div class="sub" id="trSub">Set your main to personalize this page</div>
+    </div>
+    <div class="tr-switch">
+      <label>Character</label>
+      <select id="charSwitch"></select>
+    </div>
   </div>
-</header>
 
-<div class="hub">
-  <a class="current" href="#" onclick="window.scrollTo({top:document.querySelector('nav.tabs').offsetTop,behavior:'smooth'});return false;">
-    <div class="hicon">⚡</div>
-    <div class="htitle">The Trainer</div>
-    <div class="hdesc">Your Lars gameplan — core moves, punishers, defense, combos, and matchup plans. Start here.</div>
-    <span class="hbadge">you're here</span>
-  </a>
-  <a href="./framedata.html">
-    <div class="hicon">📊</div>
-    <div class="htitle">Frame Data</div>
-    <div class="hdesc">Every move for all characters. Search, sort, and filter by unsafe, launchers, lows. Color-coded risk.</div>
-    <span class="hbadge">all characters</span>
-  </a>
-  <a href="./player.html">
-    <div class="hicon">🔍</div>
-    <div class="htitle">Player Lookup</div>
-    <div class="hdesc">Pull anyone's ranked stats and recent battles by Tekken ID. Save your crew. Powered by EWGF.</div>
-    <span class="hbadge">live stats</span>
-  </a>
+  <div id="signinNote"></div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-t="punishers">Punishers</div>
+    <div class="tab" data-t="pokes">Pokes</div>
+    <div class="tab" data-t="launchers">Launchers</div>
+    <div class="tab" data-t="lows">Lows</div>
+    <div class="tab" data-t="safe_mids">Pressure</div>
+    <div class="tab" data-t="heat_engagers">Heat</div>
+    <div class="tab" data-t="homing">Homing</div>
+    <div class="tab" data-t="power_crushes">Power Crush</div>
+    <div class="tab" data-t="throws">Throws</div>
+    <div class="tab" data-t="defense">Defense</div>
+  </div>
+
+  <div class="state" id="loading"><div class="spinner"></div>Loading your playbook…</div>
+  <div id="errSlot"></div>
+  <div id="panels"></div>
 </div>
 
-<nav class="tabs">
-  <div class="inner">
-    <button class="tab active" data-tab="start">⚡ Start Here</button>
-    <button class="tab" data-tab="punish">Punishers</button>
-    <button class="tab" data-tab="pokes">Pokes &amp; Neutral</button>
-    <button class="tab" data-tab="combos">Combos</button>
-    <button class="tab" data-tab="defense">Defense</button>
-    <button class="tab" data-tab="stances">Stances</button>
-    <button class="tab" data-tab="universal">Universal</button>
-    <button class="tab" data-tab="matchups">Matchups</button>
-    <button class="tab" data-tab="patch">⚡ Patch Watch</button>
-    <button class="tab" data-tab="plan">Practice Plan</button>
-    <button class="tab" data-tab="howto">How This Works</button>
-    <a class="tab" href="./framedata.html" style="text-decoration:none;display:inline-flex;align-items:center;color:var(--volt);border:1px solid var(--volt-deep)">📊 Frame Data</a>
-    <a class="tab" href="./player.html" style="text-decoration:none;display:inline-flex;align-items:center;color:var(--volt);border:1px solid var(--volt-deep)">🔍 Player Lookup</a>
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">L</span>Lightning Trainer</div><p>Your personal Tekken 8 trainer — built around your main, from real frame data.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./matchup.html">Matchups</a><a href="./rank.html">Rank Guide</a></div>
+    <div class="fcol"><h4>Sources</h4><a href="https://tekkendocs.com" target="_blank" rel="noopener">TekkenDocs</a><a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a></div>
   </div>
-</nav>
-
-<main>
-
-<!-- ============ START HERE ============ -->
-<section class="panel-view active" id="start">
-  <div class="section-head">
-    <h2>The Core 6</h2><span class="tag">learn only these first</span>
-  </div>
-  <p class="lead">You came from Jack-8 — big slow buttons, patience, raw damage. <strong>Lars is the opposite.</strong> He's speed, pokes, and turning mistakes into huge combos. Your instinct to plant your feet and swing big will get you launched. Learn these six moves and nothing else this week.</p>
-
-  <div class="callout warn">
-    <div class="co-title">⚠ Your #1 leak (from your stats)</div>
-    <p>Attack <strong>72</strong> / Defense <strong>36</strong>. Counter-hit damage <strong>107</strong> / clean punish damage <strong>13</strong>. Translation: you win by out-mashing other mashers, and you can't punish or hold a turn. That ceiling is exactly your current rank. <strong>The fix is less offense, not more.</strong></p>
-  </div>
-
-  <div class="grid two">
-    <div class="card key-move">
-      <span class="badge poke">your #1 button</span>
-      <div class="move-name">df1 — the check</div>
-      <div class="inputs combo-row"><span class="xb dir">df</span><span class="plus">+</span><span class="xb x">X</span></div>
-      <div class="desc">Fast 13f poke. Press this constantly in neutral — it's your "is it my turn?" button. Recovers fast, even beats armor moves.</div>
-      <div class="frames"><span>i13</span><span>-3 <b>oB</b></span><span>+5 oH</span></div>
-    </div>
-
-    <div class="card key-move">
-      <span class="badge punish">fastest punish</span>
-      <div class="move-name">2,1 — the snap punish</div>
-      <div class="inputs combo-row"><span class="xb y">Y</span><span class="plus">,</span><span class="xb x">X</span></div>
-      <div class="desc">Your i10 punish. When you block something slightly unsafe, this is the answer. Fast, safe, always there.</div>
-      <div class="frames"><span>i10</span><span>-6 <b>oB</b></span></div>
-    </div>
-
-    <div class="card key-move">
-      <span class="badge launcher">your launcher</span>
-      <div class="move-name">F1+2 — the big one</div>
-      <div class="inputs combo-row"><span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span></div>
-      <div class="desc">Easy 15f launcher. Block something <em>very</em> unsafe, or catch a whiff → this launches into a full combo. This is the punish damage your stats are missing.</div>
-      <div class="frames"><span>i15</span><span>LAUNCH</span></div>
-    </div>
-
-    <div class="card key-move">
-      <span class="badge poke">space control</span>
-      <div class="move-name">Jab → 1,1,1</div>
-      <div class="inputs combo-row"><span class="xb x">X</span><span class="arrow">→</span><span class="xb x">X</span><span class="xb x">X</span><span class="xb x">X</span></div>
-      <div class="desc">Long-reaching jab, +1 on block. The full 1,1,1 is a wall-splatting Heat Engager and your best i10 counter-hit tool.</div>
-      <div class="frames"><span>i10</span><span>+1 <b>oB</b></span></div>
-    </div>
-
-    <div class="card safe-move">
-      <span class="badge poke">homing</span>
-      <div class="move-name">b1 — the pin</div>
-      <div class="inputs combo-row"><span class="xb dir">b</span><span class="plus">+</span><span class="xb x">X</span></div>
-      <div class="desc">Homing mid — tracks sidesteps and stops people walking around you (Lars is linear, so you need this). Safe-ish, launches on counter-hit.</div>
-      <div class="frames"><span>i15</span><span>-9 <b>oB</b></span></div>
-    </div>
-
-    <div class="card danger-move">
-      <span class="badge risky">high risk</span>
-      <div class="move-name">db4 — the low poke</div>
-      <div class="inputs combo-row"><span class="xb dir">db</span><span class="plus">+</span><span class="xb b">B</span></div>
-      <div class="desc">+5 and great on hit, full combo on counter-hit. <strong style="color:var(--danger)">BUT -26 on block = you eat a full combo.</strong> Use it occasionally to keep them honest. Never spam it.</div>
-      <div class="frames"><span>i20</span><span style="color:var(--danger)">-26 oB</span></div>
-    </div>
-  </div>
-
-  <div class="callout info" style="margin-top:20px">
-    <div class="co-title">The whole game in one line</div>
-    <p>Small mistake → jab them with <strong>2,1 (Y,X)</strong>. Big mistake or whiff → launch with <strong>F1+2 (f + X+Y)</strong>. Everything else is blocking and poking with df1. <strong>Boring wins = rank ups.</strong></p>
-  </div>
-</section>
-
-<!-- ============ PUNISHERS ============ -->
-<section class="panel-view" id="punish">
-  <div class="section-head">
-    <h2>Punishers</h2><span class="tag">Lars has the best in the game</span>
-  </div>
-  <p class="lead">Block their unsafe move, then press the matching punish before they recover. <strong>The bigger their minus, the bigger your punish.</strong> This is your superpower and the thing your stats said you had almost none of.</p>
-
-  <div class="ptable">
-    <div class="pt-head"><span class="ic">🛡️</span> Standing — when you block standing</div>
-    <div class="prow"><div class="when">-10 / -11</div><div><div class="combo-row"><span class="xb y">Y</span><span class="plus">,</span><span class="xb x">X</span> <span style="color:var(--ink-dim);margin-left:6px">2,1</span></div><div class="note">Fastest jab punish, auto LEN mixup</div></div></div>
-    <div class="prow"><div class="when">-12</div><div><div class="combo-row"><span class="xb dir">f</span><span class="plus">+</span><span class="xb y">Y</span><span class="plus">,</span><span class="xb b">B</span> <span style="color:var(--ink-dim);margin-left:6px">f2,4</span></div><div class="note">Best standing punish — most damage</div></div></div>
-    <div class="prow"><div class="when">-13</div><div><div class="combo-row"><span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb b">B</span> <span style="color:var(--ink-dim);margin-left:6px">f1+4</span></div><div class="note">Furthest reaching punish</div></div></div>
-    <div class="prow launch"><div class="when">-14 ⚡</div><div><div class="combo-row"><span class="xb dir">f</span><span class="plus">,</span><span class="xb dir">N</span><span class="plus">,</span><span class="xb dir">b</span><span class="plus">+</span><span class="xb y">Y</span><span class="plus">,</span><span class="xb x">X</span></div><div class="note">Best launch punish, best combos (harder input — learn later)</div></div></div>
-    <div class="prow launch"><div class="when">-15 ⚡</div><div><div class="combo-row"><span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span> <span style="color:var(--volt);margin-left:6px;font-weight:700">F1+2 — START HERE</span></div><div class="note">Easy launcher, your everyday go-to</div></div></div>
-    <div class="prow"><div class="when">-17+</div><div><div class="combo-row"><span class="xb a">A</span><span class="plus">+</span><span class="xb b">B</span> <span style="color:var(--ink-dim);margin-left:6px">3+4</span></div><div class="note">Good vs pushback moves, it's a Heat Engager</div></div></div>
-  </div>
-
-  <div class="ptable">
-    <div class="pt-head"><span class="ic">⬇️</span> Crouching — when you block a LOW (you'll be ducking)</div>
-    <div class="prow"><div class="when">-11</div><div><div class="combo-row"><span class="xb dir">ws</span><span class="plus">+</span><span class="xb b">B</span> <span style="color:var(--ink-dim);margin-left:6px">ws4</span></div><div class="note">Fast crouch punish</div></div></div>
-    <div class="prow"><div class="when">-13</div><div><div class="combo-row"><span class="xb dir">ws</span><span class="plus">+</span><span class="xb y">Y</span><span class="plus">,</span><span class="xb a">A</span> <span style="color:var(--ink-dim);margin-left:6px">ws2,3</span></div><div class="note">Optimal — more damage + LEN mixup</div></div></div>
-    <div class="prow launch"><div class="when">-15 ⚡</div><div><div class="combo-row"><span class="xb dir">ws</span><span class="plus">+</span><span class="xb x">X</span> <span style="color:var(--volt);margin-left:6px;font-weight:700">ws1 — launches lows</span></div><div class="note">Launches any launch-punishable low</div></div></div>
-    <div class="prow launch"><div class="when">-20 ⚡</div><div><div class="combo-row"><span class="xb dir">ws</span><span class="plus">+</span><span class="xb a">A</span> <span style="color:var(--ink-dim);margin-left:6px">ws3</span></div><div class="note">Strongest — great vs Mishima hellsweeps</div></div></div>
-  </div>
-
-  <div class="callout info">
-    <div class="co-title">Whiff punishers (when they MISS)</div>
-    <p><strong>2,1</strong> (Y,X) fast &amp; safe · <strong>F1+2</strong> (f+X+Y) easy launcher · <strong>b3,4</strong> (b+A,B) long range. When someone swings and misses, that empty space is free damage — make them pay.</p>
-  </div>
-</section>
-
-<!-- ============ POKES ============ -->
-<section class="panel-view" id="pokes">
-  <div class="section-head">
-    <h2>Pokes &amp; Neutral</h2><span class="tag">your "stay busy" buttons</span>
-  </div>
-  <p class="lead">Lars loves an inactive player — he'll run you over. But you're also <strong>linear</strong> with a bad sidestep, so you win neutral by poking, checking, and pinning steppers, not by dancing around. Keep df1 flowing.</p>
-
-  <div class="grid two">
-    <div class="card safe-move">
-      <div class="move-name">df1</div>
-      <div class="inputs combo-row"><span class="xb dir">df</span><span class="plus">+</span><span class="xb x">X</span></div>
-      <div class="desc">Main check. Fast recovery, beats armor. Press it constantly.</div>
-      <div class="frames"><span>i13</span><span>-3 oB</span></div>
-    </div>
-    <div class="card safe-move">
-      <div class="move-name">df2 — safe mid</div>
-      <div class="inputs combo-row"><span class="xb dir">df</span><span class="plus">+</span><span class="xb y">Y</span></div>
-      <div class="desc">Safe 14f mid, +9 on hit. Auto-transitions to SEN stance — hold <span class="xb dir" style="height:20px">b</span> to cancel it and stay neutral.</div>
-      <div class="frames"><span>i14</span><span>-3 oB</span><span>+9 oH</span></div>
-    </div>
-    <div class="card safe-move">
-      <div class="move-name">d2 — frame trap setup</div>
-      <div class="inputs combo-row"><span class="xb dir">d</span><span class="plus">+</span><span class="xb y">Y</span></div>
-      <div class="desc">Forces 0 on block but leaves them crouching — slight advantage. Pairs with 1,1,1 for a frame trap.</div>
-      <div class="frames"><span>i18</span><span>+0 oB</span></div>
-    </div>
-    <div class="card safe-move">
-      <div class="move-name">fff3 — slash kick</div>
-      <div class="inputs combo-row"><span class="xb dir">f,f,f</span><span class="plus">+</span><span class="xb a">A</span></div>
-      <div class="desc">+6 on block. A safe way to start your offense from range.</div>
-      <div class="frames"><span>i20</span><span>+6 oB</span></div>
-    </div>
-    <div class="card safe-move">
-      <div class="move-name">b1 — homing pin</div>
-      <div class="inputs combo-row"><span class="xb dir">b</span><span class="plus">+</span><span class="xb x">X</span></div>
-      <div class="desc">Tracks sidesteps. Your answer to people walking around your linear offense.</div>
-      <div class="frames"><span>i15</span><span>-9 oB</span></div>
-    </div>
-    <div class="card danger-move">
-      <div class="move-name">db4 — low poke</div>
-      <div class="inputs combo-row"><span class="xb dir">db</span><span class="plus">+</span><span class="xb b">B</span></div>
-      <div class="desc">+5 on hit, but <strong style="color:var(--danger)">-26 on block.</strong> Use sparingly to keep them crouching — never as spam.</div>
-      <div class="frames"><span>i20</span><span style="color:var(--danger)">-26 oB</span></div>
-    </div>
-  </div>
-
-  <div class="callout info" style="margin-top:18px">
-    <div class="co-title">Frame traps (your turn to press)</div>
-    <p>These work because their button is too slow to interrupt: <strong>1 → 1,1,1</strong> · <strong>b1 → df2</strong> · <strong>df1 → b4</strong> · <strong>db4 on hit → FC df2</strong> (catches anyone pressing after your low).</p>
-  </div>
-</section>
-
-<!-- ============ COMBOS ============ -->
-<section class="panel-view" id="combos">
-  <div class="section-head">
-    <h2>Combos</h2><span class="tag">keep it simple to start</span>
-  </div>
-  <p class="lead">Don't chase optimal. Get <strong>one</strong> combo consistent before adding anything. <span class="combo-row"><span class="arrow">→</span></span> means transition (hold the shown direction). These take reps — they won't be clean day one.</p>
-
-  <div class="combo-card">
-    <div class="cc-label">★ Beginner BnB — start with THIS</div>
-    <div class="cc-flow combo-row">
-      <span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">f</span><span class="xb y">Y</span><span class="plus">,</span><span class="xb x">X</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">df</span><span class="xb x">X</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">b</span><span class="xb a">A</span>
-    </div>
-    <div class="cc-note">F1+2 → f2,1 → df1 → b3. The simplest version. Just get reliable damage off your launcher.</div>
-  </div>
-
-  <div class="combo-card">
-    <div class="cc-label">Off F1+2 launcher — the next step up</div>
-    <div class="cc-flow combo-row">
-      <span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">df3</span><span class="arrow" style="font-size:.8rem">~d</span> DEN<span class="xb y">Y</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">f</span><span class="xb y">Y</span><span class="xb x">X</span><span class="arrow" style="font-size:.8rem">~</span>SEN<span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span>
-      <span class="arrow">→</span>
-      SEN<span class="xb x">X</span>
-    </div>
-    <div class="cc-note">F1+2 → df3~d DEN2 → f21~SEN1+2 → SEN1. More damage and carry once you're comfortable with stance cancels.</div>
-  </div>
-
-  <div class="combo-card">
-    <div class="cc-label">Counter-hit ff1+2</div>
-    <div class="cc-flow combo-row">
-      <span class="xb dir">db</span><span class="xb y">Y</span><span class="xb x">X</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">f</span><span class="xb y">Y</span><span class="xb x">X</span><span class="arrow" style="font-size:.8rem">~</span>SEN<span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">f</span><span class="xb y">Y</span><span class="xb x">X</span><span class="arrow" style="font-size:.8rem">~</span>SEN<span class="xb x">X</span>
-    </div>
-    <div class="cc-note">db21 → f21~SEN1+2 → f21~SEN1</div>
-  </div>
-
-  <div class="combo-card">
-    <div class="cc-label">⚡ Wall combo — when you carry them to the wall</div>
-    <div class="cc-flow combo-row">
-      <span class="xb dir">df</span><span class="xb x">X</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">db</span><span class="xb y">Y</span><span class="xb x">X</span>
-      <span class="arrow">→</span>
-      <span class="xb dir">f</span><span class="xb x">X</span><span class="plus">+</span><span class="xb b">B</span>
-    </div>
-    <div class="cc-note">df1 → db21 → f1+4. Simpler option: 1 → df1 → d3,1. Lars has the best wall carry in the game — this is where your damage comes from.</div>
-  </div>
-
-  <div class="callout warn">
-    <div class="co-title">⚠ Season 3 note</div>
-    <p>These routes are from the Season 2 guide. S3 reworked Heat — <strong>Heat Smash no longer wall splats</strong> and some Heat-Dash combos are shorter. The non-Heat combos above are fine. Verify any Heat-route damage in Practice mode before trusting older combo videos.</p>
-  </div>
-</section>
-
-<!-- ============ DEFENSE ============ -->
-<section class="panel-view" id="defense">
-  <div class="section-head">
-    <h2>Defense</h2><span class="tag">your biggest weakness — Defense 36</span>
-  </div>
-  <p class="lead">Your numbers say you mash into counter-hits and can't hold a turn. <strong>This section is your climb.</strong> Building Defense from 36 toward your Attack's 72 is the entire game for you.</p>
-
-  <div class="grid two">
-    <div class="card key-move">
-      <div class="move-name">1 · When in doubt, block</div>
-      <div class="desc">Hold <span class="xb dir" style="height:20px">b</span> for mids/highs, hold <span class="xb dir" style="height:20px">db</span> for lows. Most of your losses come from pressing when it's not your turn. Doing nothing is often the winning move.</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">2 · Stop pressing after YOUR blocked moves</div>
-      <div class="desc">When your move is negative (df1 is -3, db4 is -26), it's <strong>their</strong> turn. Don't mash a follow-up — that's how you eat counter-hits. Let go and block.</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">3 · Block the lows</div>
-      <div class="desc">Hold <span class="xb dir" style="height:20px">db</span>. Lows hurt on hit but are usually launch-punishable on block. Block them, then punish from crouch (ws1 = rise+X launches).</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">4 · Always punish what you block</div>
-      <div class="desc">Blocking without punishing just hands them another turn. See the Punishers tab — 2,1 for small, F1+2 for big.</div>
-    </div>
-  </div>
-
-  <div class="callout warn" style="margin-top:18px">
-    <div class="co-title">⚠ Throw breaks (your Throw Escape is C)</div>
-    <p>Throws are broken by matching the animation: <strong>1+2</strong> (X+Y), <strong>1</strong> (X), or <strong>2</strong> (Y). For now, default to mashing <strong>X+Y</strong> when grabbed — it breaks the most common throws. Refine by reading the arm animation later.</p>
-  </div>
-
-  <div class="callout info">
-    <div class="co-title">Panic moves — use SPARINGLY</div>
-    <p>These are last resorts, not habits. You already press too much. <strong>1,1,1</strong> (X,X,X) i10 interrupt but -12 · <strong>2+3</strong> (Y+A) power crush/armor but punishable · <strong>uf3</strong> (uf+A) launches but <span style="color:var(--danger)">-26 on block.</span> They all lose to throws and patient blocking.</p>
-  </div>
-</section>
-
-<!-- ============ STANCES ============ -->
-<section class="panel-view" id="stances">
-  <div class="section-head">
-    <h2>Stances</h2><span class="tag">his identity — but earn these LATER</span>
-  </div>
-  <div class="callout warn">
-    <div class="co-title">⚠ Read this before you spam stances</div>
-    <p><strong>Ignore stance mixups for your first couple weeks.</strong> Spamming stances while you don't understand them = blocked and launched. Play the poke/punish game first. Use this tab to <em>recognize</em> the three stances now, and start using them once your fundamentals are solid.</p>
-  </div>
-
-  <div class="grid three">
-    <div class="stance-card">
-      <h3>DEN</h3>
-      <div class="enter">Dynamic Entry · enter with f3 (f+A), or auto from f1,2,3 / ff4,2</div>
-      <ul>
-        <li><div><span class="sm-name">DEN1</span><span class="sm-desc">Long-range jab, +1 oB / +8 oH</span></div><span class="xb x">X</span></li>
-        <li><div><span class="sm-name">DEN3</span><span class="sm-desc">+5 homing mid, Heat Engager</span></div><span class="xb a">A</span></li>
-        <li><div><span class="sm-name">DEN1+2</span><span class="sm-desc">Launcher (Tornado)</span></div><div class="combo-row"><span class="xb x">X</span><span class="xb y">Y</span></div></li>
-      </ul>
-    </div>
-    <div class="stance-card">
-      <h3>SEN</h3>
-      <div class="enter">Silent Entry · press f while in DEN. Auto from f2,1 / f1,2 / df2 / DEN3</div>
-      <ul>
-        <li><div><span class="sm-name">SEN1</span><span class="sm-desc">Safe Heat-engaging mid</span></div><span class="xb x">X</span></li>
-        <li><div><span class="sm-name">SEN2</span><span class="sm-desc">Best stance low, -12, Tornado on CH</span></div><span class="xb y">Y</span></li>
-        <li><div><span class="sm-name">SEN3+4</span><span class="sm-desc">Mid-mid, 0 oB, floor breaks</span></div><div class="combo-row"><span class="xb a">A</span><span class="xb b">B</span></div></li>
-      </ul>
-    </div>
-    <div class="stance-card">
-      <h3>LEN</h3>
-      <div class="enter">Limited Entry · auto from 2,1. Or hold d in SEN</div>
-      <ul>
-        <li><div><span class="sm-name">LEN1</span><span class="sm-desc">Quick stance attack</span></div><span class="xb x">X</span></li>
-        <li><div><span class="sm-name">LEN2</span><span class="sm-desc">Launcher (Tornado)</span></div><span class="xb y">Y</span></li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="callout info" style="margin-top:18px">
-    <div class="co-title">Honest truth about SEN pressure</div>
-    <p>"SEN on block is not a real mixup" — good players step left and duck your follow-ups. So don't lean on stance pressure to carry you. It's a layer you add <em>on top of</em> solid pokes and punishes, not a replacement for them.</p>
-  </div>
-</section>
-
-<!-- ============ HWOARANG ============ -->
-<!-- ============ UNIVERSAL PUNISHMENT ============ -->
-<section class="panel-view" id="universal">
-  <div class="section-head">
-    <h2>Universal Punishment</h2><span class="tag">the skill that beats EVERY character</span>
-  </div>
-  <p class="lead">This is the real key to your climb — and it works against all 40 characters, so you don't need to memorize 40 frame charts. Almost everyone's unsafe moves fall into a few <strong>types.</strong> Learn to recognize the type, and your Lars punish is always the same.</p>
-
-  <div class="callout info">
-    <div class="co-title">The one rule that never changes</div>
-    <p>When you block something and the opponent is <strong>frozen / can't move for a beat</strong> — that was unsafe. Press your punish immediately. Small freeze → <strong>2,1 (Y,X)</strong>. Big freeze → <strong>F1+2 (f+X+Y)</strong> launch. You don't need to know the exact number — you need to recognize the freeze and react.</p>
-  </div>
-
-  <h3 style="font-family:'Inter';font-weight:700;font-size:1.4rem;margin:22px 0 14px;color:var(--volt)">The 5 unsafe move TYPES everyone has</h3>
-  <div class="grid two">
-    <div class="card danger-move">
-      <span class="badge risky">type 1</span>
-      <div class="move-name">Launchers (on block)</div>
-      <div class="desc">Big single hits that launch on hit are almost always -13 to -15 on block. When you block a scary power move and they freeze → <strong>F1+2</strong> to launch them back. Examples everyone has: hopkicks (uf4-type), big mids.</div>
-    </div>
-    <div class="card danger-move">
-      <span class="badge risky">type 2</span>
-      <div class="move-name">Hellsweeps &amp; big lows</div>
-      <div class="desc">Sweeping lows that knock down are usually launch-punishable. Block low (hold <span class="xb dir" style="height:20px">db</span>), then punish from crouch with <strong>ws1 (rise+X)</strong> to launch. This is how you stop Mishima hellsweep spam.</div>
-    </div>
-    <div class="card danger-move">
-      <span class="badge risky">type 3</span>
-      <div class="move-name">String enders</div>
-      <div class="desc">Long strings (like Hwoarang's) usually end unsafe — that's the trade for the pressure. Block the WHOLE string, punish the last hit with <strong>F1+2</strong> or <strong>2,1</strong>. Never interrupt the middle.</div>
-    </div>
-    <div class="card danger-move">
-      <span class="badge risky">type 4</span>
-      <div class="move-name">Whiffed pokes</div>
-      <div class="desc">When someone throws a move at the wrong range and it whiffs, the recovery is huge. Step back to bait it, then <strong>F1+2</strong> or <strong>b3,4</strong> into the empty space. Whiff punishing is a core win condition.</div>
-    </div>
-    <div class="card safe-move">
-      <span class="badge poke">type 5</span>
-      <div class="move-name">"Safe" pressure (-9 to -10)</div>
-      <div class="desc">Lots of moves are only slightly minus. You can't launch, but you can still take your turn with <strong>2,1 (Y,X)</strong> or just press <strong>df1 (df+X)</strong> to check them. Don't sit and eat another turn.</div>
-    </div>
-  </div>
-
-  <div class="callout cue" style="margin-top:18px">
-    <div class="co-title">✓ Lab any new opponent in 60 seconds</div>
-    <p>Lost to a character you don't know? Go to Practice, set the CPU to that character, and just <strong>block everything.</strong> Watch which moves leave them frozen — those are your punish targets. You don't need a guide for the basics; the freeze tells you. Then bring me the character name and I'll add a proper verified matchup page.</p>
-  </div>
-</section>
-
-<!-- ============ MATCHUPS HUB ============ -->
-<section class="panel-view" id="matchups">
-  <div class="section-head">
-    <h2>Matchups</h2><span class="tag">grows as you bring me opponents</span>
-  </div>
-  <p class="lead">This library grows one verified page at a time. You tell me who keeps beating you, I research <em>that</em> character properly and add a focused, accurate section — instead of 40 shaky charts you'll never read. <strong>Hwoarang is done. Bring me the next one.</strong></p>
-
-  <div class="callout info">
-    <div class="co-title">Why it works this way</div>
-    <p>Nobody climbs by memorizing every matchup up front. You learn the 5-6 characters you actually keep losing to, as you hit them. One accurate page beats forty guesses — and it means every matchup here is something I've actually verified against current frame data.</p>
-  </div>
-
-  <!-- Hwoarang matchup -->
-  <div style="margin-top:24px">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Hwoarang <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">your worst matchup</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">Hwoarang's whole game is long kick strings that <strong>bait you into mashing.</strong> When you press mid-string, he counter-hits you and keeps his turn. The counter is the most disciplined thing in Tekken: <strong>block, and do nothing.</strong></p>
-
-    <div class="grid two">
-      <div class="card key-move">
-        <span class="badge poke">step 1</span>
-        <div class="move-name">Block the whole string</div>
-        <div class="desc">Hold <span class="xb dir" style="height:20px">b</span> for the mid kicks, <span class="xb dir" style="height:20px">db</span> when you see a low. Let the entire string finish on block. Do NOT try to interrupt — that's the bait.</div>
-      </div>
-      <div class="card key-move">
-        <span class="badge launcher">step 2</span>
-        <div class="move-name">Punish the end</div>
-        <div class="desc">Most of his strings end very unsafe. The moment his kicks stop and he's frozen → launch with <strong>F1+2</strong> <span class="combo-row"><span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span></span>, or <strong>2,1</strong> <span class="combo-row"><span class="xb y">Y</span><span class="xb x">X</span></span> if only slightly unsafe.</div>
-      </div>
-      <div class="card danger-move">
-        <span class="badge risky">don't</span>
-        <div class="move-name">Don't interrupt mid-string</div>
-        <div class="desc">Unless you KNOW a specific gap (you don't yet), pressing during his string loses. Interrupting is exactly how you lose this matchup.</div>
-      </div>
-      <div class="card safe-move">
-        <span class="badge poke">do</span>
-        <div class="move-name">Respect lows, launch the bad ones</div>
-        <div class="desc">Hold <span class="xb dir" style="height:20px">db</span> and watch for low-kick animations. When you block an unsafe low, punish from crouch with <strong>ws1</strong> (rise+X) to launch.</div>
-      </div>
-    </div>
-
-    <div class="callout cue" style="margin-top:18px">
-      <div class="co-title">✓ Say this out loud while you play</div>
-      <div class="mantra">Block the string <span class="sep">·</span> Punish the end <span class="sep">·</span> Don't press</div>
-      <p style="text-align:center">That one sentence flips this matchup at your rank.</p>
-    </div>
-  </div>
-
-  <!-- ===== BRYAN ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Bryan <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the discipline test</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">Bryan is the character that punishes <strong>exactly</strong> the habit your stats flagged — mashing into counter-hits. He has no fast mid launcher and a bad low game, so he <em>wins by making you press</em> into his huge counter-hit buttons. Beat Bryan by slowing down. This is the matchup that builds your defense.</p>
-
-    <div class="callout info" style="margin-bottom:18px">
-      <div class="co-title">Understand his whole game in one idea</div>
-      <p>Bryan's damage comes from <strong>counter-hits and whiff punishes</strong>, not from opening you up. His jab strings and pokes are designed to bait a button so he lands a CH launcher. <strong>If you stop mashing and just block, Bryan has a genuinely hard time opening you up.</strong> Patience starves him.</p>
-    </div>
-
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats — what's hurting you</h4>
-    <div class="grid two">
-      <div class="card danger-move">
-        <span class="badge risky">launch-punishable low</span>
-        <div class="move-name">Snake Edge — df+3</div>
-        <div class="desc">His famous sweeping low that launches on hit — low-rank Bryans spam it. It's slow (i29) so you can <strong>block it on reaction</strong> by holding <span class="xb dir" style="height:20px">db</span>. On block it's <strong>-26</strong> → free launch. Block low → <strong>ws1 (rise + X)</strong> to launch him. This single habit wins games vs Bryan.</div>
-      </div>
-      <div class="card danger-move">
-        <span class="badge risky">the "deathfist"</span>
-        <div class="move-name">Hatchet / f,F+2</div>
-        <div class="desc">A fast, long-range high that's a Heat Engager and does big damage. It's <strong>-9 on block</strong> — not quite launchable, but it's a <strong>high</strong>, so you can <strong>duck it</strong> if you read it and launch with ws1. At minimum, block it (hold <span class="xb dir" style="height:20px">b</span>) and take your turn with 2,1.</div>
-      </div>
-      <div class="card danger-move">
-        <span class="badge risky">don't challenge</span>
-        <div class="move-name">qcb+1 — his keepout button</div>
-        <div class="desc">+5 on block and a counter-hit launcher. This is his best button and he'll throw it constantly at mid-range. <strong>Do not press after blocking it</strong> — it's his turn (+5). Respect it, hold block, wait for your moment. Mashing here is how you eat a combo.</div>
-      </div>
-      <div class="card danger-move">
-        <span class="badge risky">the bait</span>
-        <div class="move-name">Jab strings — 1,2,x</div>
-        <div class="desc">His jabs have huge range. <strong>1,2</strong> is his offense starter; the <strong>1,2,1</strong> third hit is a CH launcher AND safe, so he's daring you to interrupt. <strong>1,2,3</strong> ends in a low (-12, punishable), <strong>1,2,4</strong> ends high (Heat Engager). Block the string, don't interrupt — then punish the ender.</div>
-      </div>
-    </div>
-
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:20px 0 10px;color:var(--volt)">Your punishes (verified Bryan frames → your Lars answer)</h4>
-    <div class="ptable">
-      <div class="prow launch"><div class="when">Snake Edge<br>df+3 (-26)</div><div><div class="combo-row">block low → <span class="xb dir">ws</span><span class="plus">+</span><span class="xb x">X</span> <span style="color:var(--volt);margin-left:6px;font-weight:700">ws1 LAUNCH</span></div><div class="note">His biggest mistake. Full combo every time you block it.</div></div></div>
-      <div class="prow launch"><div class="when">3,2,1<br>(-9 to -15 enders)</div><div><div class="combo-row">block → <span class="xb dir">f</span><span class="plus">+</span><span class="xb x">X</span><span class="plus">+</span><span class="xb y">Y</span> <span style="color:var(--volt);margin-left:6px">F1+2</span></div><div class="note">His mid strings end unsafe. Launch the ender.</div></div></div>
-      <div class="prow"><div class="when">f,F+2 hatchet<br>(-9, HIGH)</div><div><div class="combo-row">duck → <span class="xb dir">ws</span><span class="plus">+</span><span class="xb x">X</span>, or block → <span class="xb y">Y</span><span class="xb x">X</span></div><div class="note">It's a high — duck on read to launch, else just take your turn.</div></div></div>
-      <div class="prow"><div class="when">1,2,3 low ender<br>(-12)</div><div><div class="combo-row">block low → <span class="xb dir">ws</span><span class="plus">+</span><span class="xb y">Y</span><span class="plus">,</span><span class="xb a">A</span> <span style="color:var(--ink-dim);margin-left:6px">ws2,3</span></div><div class="note">Or low parry it. Don't just sit and eat the +2.</div></div></div>
-      <div class="prow"><div class="when">qcb+2 / SS.2<br>(-9)</div><div><div class="combo-row">block → <span class="xb y">Y</span><span class="plus">,</span><span class="xb x">X</span> <span style="color:var(--ink-dim);margin-left:6px">2,1</span></div><div class="note">Not launchable, but take your turn back.</div></div></div>
-    </div>
-
-    <div class="grid two" style="margin-top:6px">
-      <div class="card key-move">
-        <span class="badge poke">do this</span>
-        <div class="move-name">Make him swing first</div>
-        <div class="desc">Bryan wants YOU to attack into his counter-hits. Flip it: hold your ground, block, and <strong>whiff punish</strong> his long pokes with F1+2 when they miss. Use df1 (df+X) to check, but don't over-commit. The patient player wins this MU.</div>
-      </div>
-      <div class="card key-move">
-        <span class="badge poke">your edge</span>
-        <div class="move-name">Pressure him — his defense is worse</div>
-        <div class="desc">Once it's <em>your</em> turn (after blocking something unsafe), Bryan can't mash out well — he has no fast panic launcher like you'd fear from others. Take your turn confidently with df1 pokes and your safe pressure. Don't give the turn back by freestyling.</div>
-      </div>
-    </div>
-
-    <div class="callout cue" style="margin-top:18px">
-      <div class="co-title">✓ Say this out loud vs Bryan</div>
-      <div class="mantra">Don't mash <span class="sep">·</span> Block low for Snake Edge <span class="sep">·</span> Punish what's unsafe</div>
-      <p style="text-align:center">Bryan beats panic. Stay calm and he runs out of ways to hurt you.</p>
-    </div>
-  </div>
-
-  <!-- ===== DRAGUNOV ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Dragunov <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the rushdown bully</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">Dragunov is relentless pressure with great pokes, plus-frames, and a scary throw game. But his offense is <strong>more bark than bite once you stop respecting it</strong> &mdash; most of his turns end and can be interrupted, and his big lows are launch-punishable. Keys: duck his key strings, step his approach, break throws.</p>
-    <div class="callout info" style="margin-bottom:18px"><div class="co-title">His whole game in one idea</div><p>He chips you with pokes (d+2, df+1, jabs) and plus-frames, then cashes out with throws or a counter-hit. His launching offense is thin outside WR2. <strong>Block patiently, duck the right strings, and he gives his turn back constantly.</strong></p></div>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">step it left</span><div class="move-name">WR2 (f,f,F+2) &mdash; his approach</div><div class="desc">His main neutral tool to rush in. Players throw it mindlessly. <strong>Sidestep LEFT</strong> to make it whiff, then whiff-punish with F1+2. A backdash also makes his throws fall short.</div></div>
-      <div class="card danger-move"><span class="badge risky">DUCK these</span><div class="move-name">b+4,2,1 and d+4,1</div><div class="desc">These <strong>must be ducked</strong> &mdash; the last hits are high. Block standing all day and he frame-traps you. Duck the high ending and launch. The #1 Dragunov-specific read.</div></div>
-      <div class="card danger-move"><span class="badge risky">launch on block</span><div class="move-name">His lows &mdash; d+3+4, db+3+4</div><div class="desc">Launch-punishable on block. Hold <span class="xb dir" style="height:20px">db</span>, block low, punish from crouch with ws1 (rise+X). When he throws one up close, make him pay.</div></div>
-      <div class="card danger-move"><span class="badge risky">break them</span><div class="move-name">His throw game</div><div class="desc">F+1+4, F+2+3, uf+1+2. Default to breaking <strong>1+2 (X+Y)</strong> and watch the arm. A sidestep or backdash makes throw attempts whiff entirely.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs Dragunov</div><div class="mantra">Step left on approach <span class="sep">&middot;</span> Duck b4,2,1 &amp; d4,1 <span class="sep">&middot;</span> Break throws</div></div>
-  </div>
-
-  <!-- ===== JIN ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Jin <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the fundamentalist</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">Jin is a clean, fundamentals character &mdash; strong pokes, a parry, a counter-hit game, electric. No cheap gimmick; he beats you with solid play. So beat him the same way: block, punish his unsafe stuff, don't feed his counter-hits.</p>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">respect it</span><div class="move-name">df+1 and ff+2</div><div class="desc">df+1 is his strong safe poke that starts pressure; ff+2 is his safe Heat-engaging mid he throws constantly. Both safe &mdash; <strong>don't try to punish</strong>, just block (hold <span class="xb dir" style="height:20px">b</span>) and take your turn when it's yours.</div></div>
-      <div class="card danger-move"><span class="badge risky">don't mash</span><div class="move-name">CH launchers (f+4, etc.)</div><div class="desc">Jin has strong counter-hit buttons that launch if you press into them. His mid-range wants you mashing. <strong>Stay patient</strong> &mdash; block and whiff-punish rather than challenging.</div></div>
-      <div class="card danger-move"><span class="badge risky">DUCK this</span><div class="move-name">2,1,4 string</div><div class="desc">Commonly spammed at round start. The ending is duckable/punishable on block. Don't respect the whole thing &mdash; block it and punish the unsafe ender with F1+2.</div></div>
-      <div class="card danger-move"><span class="badge risky">don't get parried</span><div class="move-name">Kazama parry (b+1+3)</div><div class="desc">Jin can parry attacks. Don't throw predictable single highs into a reading Jin. Vary timing &mdash; and remember <strong>throws beat parries</strong>, so your 1+2 throw punishes a parry-happy Jin.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs Jin</div><div class="mantra">Respect df1 &amp; ff2 <span class="sep">&middot;</span> Don't mash into CH <span class="sep">&middot;</span> Punish unsafe enders</div></div>
-  </div>
-
-  <!-- ===== DEVIL JIN ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Devil Jin <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the Mishima</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">Devil Jin has scary tools &mdash; electric (EWGF), a launching hellsweep, suffocating wavedash pressure. But Mishimas live and die by <strong>execution and risk</strong>: his hellsweep is launch-punishable, his electric can be baited, his approach stepped. Make him earn everything.</p>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">block low + launch</span><div class="move-name">Hellsweep (CD4)</div><div class="desc">His iconic low from wavedash &mdash; big damage on hit, but <strong>launch-punishable on block</strong>. Hold <span class="xb dir" style="height:20px">db</span>, block, launch from crouch with ws1 (rise+X). Blocking this is most of the matchup.</div></div>
-      <div class="card danger-move"><span class="badge risky">bait it</span><div class="move-name">Electric (EWGF)</div><div class="desc">Fast, plus, scary &mdash; but Devil Jins fall into <strong>set timings</strong>. Hover just outside its range, bait the whiff, punish with F1+2. Stay close to make clean electrics harder. Don't panic-mash into it.</div></div>
-      <div class="card danger-move"><span class="badge risky">step it</span><div class="move-name">ff+2 and wavedash</div><div class="desc">ff+2 is his safe Heat engager but has weak tracking &mdash; <strong>sidestep</strong> his approach. After blocking ff2 he tends to keep pressing, so a well-timed poke catches him.</div></div>
-      <div class="card danger-move"><span class="badge risky">1,1,2 is launchable</span><div class="move-name">1,1 string &amp; extensions</div><div class="desc">1,1 is only -1 and safe, but <strong>1,1,2 is launch-punishable</strong> &mdash; many let it rip anyway. Block the string; if he throws the 2, launch. Don't respect a minus string.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs Devil Jin</div><div class="mantra">Block low for hellsweep <span class="sep">&middot;</span> Bait the electric <span class="sep">&middot;</span> Step ff2</div></div>
-  </div>
-
-  <!-- ===== KING ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs King <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the grappler</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">King is the throw monster &mdash; grabs and chain throws that delete half your health. At your rank he wins mostly because <strong>people don't break throws</strong>. A defense and throw-break test. His movement is bad and many strikes are slow, so once you handle grabs, you bully him.</p>
-    <div class="callout warn" style="margin-bottom:18px"><div class="co-title">&#9888; The thing you MUST learn: throw breaks</div><p>Most King throws break on the <strong>hand he leads with</strong>: left hand &rarr; <strong>1 (X)</strong>, right &rarr; <strong>2 (Y)</strong>, both &rarr; <strong>1+2 (X+Y)</strong>. <strong>Giant Swing is a 1 (X) break</strong> even though it looks two-armed &mdash; when swung, mash <strong>1 (X)</strong> to tech-roll and cut the damage. You won't break them all (nobody does), but breaking ~half flips the matchup.</p></div>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats &amp; your answers</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">launch on block</span><div class="move-name">Atlas Hammer &amp; his snake-edge low</div><div class="desc">Atlas Hammer is unsafe &mdash; <strong>always launch-punish</strong> with F1+2. His slow snake-edge low launches on hit; hold <span class="xb dir" style="height:20px">db</span>, block low, punish (ws1) or low-parry.</div></div>
-      <div class="card danger-move"><span class="badge risky">punish it</span><div class="move-name">df+1 extension &amp; df+2,1</div><div class="desc">His df+1 extension is <strong>-10 &rarr; jab-punish (2,1 = Y,X)</strong>. Duck df+2,1 if he fishes. His foot power-crush is ~-10 &mdash; jab punish that too.</div></div>
-      <div class="card key-move"><span class="badge poke">do this</span><div class="move-name">Check him with pokes, step throws</div><div class="desc">Up close, smother him with <strong>df1 (df+X) and jabs</strong> &mdash; his strikes are slow, so you interrupt. <strong>Sidestep</strong> throw attempts; many whiff if you're moving.</div></div>
-      <div class="card key-move"><span class="badge poke">your edge</span><div class="move-name">Bully him, bait the grab</div><div class="desc">King wants you passive so he can grab. Stay active and <strong>counter-hit when you read a throw</strong> &mdash; a quick button beats grab startup. Pressure his bad defense.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs King</div><div class="mantra">Break throws (1/2/1+2) <span class="sep">&middot;</span> Launch Atlas Hammer <span class="sep">&middot;</span> Stay active</div></div>
-  </div>
-
-  <!-- ===== ARMOR KING ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Armor King <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the striker-grappler</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">King's aggressive cousin &mdash; fewer chain throws, but strong plus-frame pokes, a stance (Bad Jaguar), command throws, big counter-hit damage. He's <strong>linear</strong> (steppable) with limited lows, so step his offense, block patiently, and launch his unsafe power moves.</p>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats &amp; your answers</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">launch it</span><div class="move-name">Power crushes (f+1+2, etc.)</div><div class="desc"><strong>-12 on block and throw/launch punishable</strong>. Block one, punish with F1+2 to launch. Don't let the armor scare you into respecting it &mdash; on block it's your turn.</div></div>
-      <div class="card danger-move"><span class="badge risky">step left</span><div class="move-name">Linear mids &amp; FF2</div><div class="desc">Much of his offense is linear &mdash; <strong>sidestep</strong> (to his weak side) to whiff it, then punish. FF2 is a nasty CH launcher, so step it rather than challenging head-on.</div></div>
-      <div class="card danger-move"><span class="badge risky">break them</span><div class="move-name">Command throws + Bad Jaguar</div><div class="desc">Giant Swing (1 break), Tombstone, stance throws. Break on the leading hand, default <strong>1+2 (X+Y)</strong>. After f1+2 into Bad Jaguar he's +27 &mdash; <strong>don't mash there</strong>, block.</div></div>
-      <div class="card key-move"><span class="badge poke">do this</span><div class="move-name">Block lows, smother with pokes</div><div class="desc">His low game is limited, so <strong>you can block high-ish</strong> and watch for the rare low. Fast pokes (df1) and stepping shut down his linear pressure.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs Armor King</div><div class="mantra">Launch his power crush <span class="sep">&middot;</span> Step the linear mids <span class="sep">&middot;</span> Don't mash after Bad Jaguar</div></div>
-  </div>
-
-  <!-- ===== EDDY ===== -->
-  <div style="margin-top:32px;padding-top:28px;border-top:1px solid var(--line)">
-    <h3 style="font-family:'Inter';font-weight:700;font-size:1.5rem;margin-bottom:4px;display:flex;align-items:center;gap:12px">
-      <span style="width:8px;height:28px;background:var(--volt);border-radius:3px;display:inline-block"></span>
-      vs Eddy <span style="font-size:.8rem;color:var(--ink-faint);font-family:'JetBrains Mono';font-weight:500">the capoeira flowchart</span>
-    </h3>
-    <p class="lead" style="margin:10px 0 16px">The ultimate "looks confusing, is actually a flowchart" character. Endless spinning kicks from his stances, lots of lows and highs, designed to <strong>overwhelm you into mashing or freezing</strong>. Reality: most of it is steppable and duckable, and his stance moves are punishable when you know them. He preys on panic.</p>
-    <div class="callout info" style="margin-bottom:18px"><div class="co-title">His whole game in one idea</div><p>Eddy throws fast flashy strings that <strong>look</strong> unblockable but are mostly highs/lows you block by alternating <span class="xb dir" style="height:18px">b</span> / <span class="xb dir" style="height:18px">db</span>. He wins by making you guess wildly. <strong>Slow down, block low when in doubt</strong> (lots of his pressure is lows), punish the gaps. Don't out-spin him.</p></div>
-    <h4 style="font-family:'Inter';font-weight:700;font-size:1.15rem;margin:18px 0 10px;color:var(--volt)">His big threats &amp; your answers</h4>
-    <div class="grid two">
-      <div class="card danger-move"><span class="badge risky">block low</span><div class="move-name">Low spam from stance</div><div class="desc">Eddy lives on lows from crouching/handstand stances. <strong>Default to holding <span class="xb dir" style="height:20px">db</span></strong> when he's spinning and you're unsure &mdash; many lows are punishable. Low-parry the ones you read.</div></div>
-      <div class="card danger-move"><span class="badge risky">don't mash</span><div class="move-name">Stance transitions (Handstand/RLX)</div><div class="desc">He cancels into stances to keep "flow" and bait your button. <strong>Pressing into his stance moves gets you counter-hit.</strong> Block and wait &mdash; when he stops or whiffs, that's your turn.</div></div>
-      <div class="card danger-move"><span class="badge risky">step it</span><div class="move-name">Spinning approaches</div><div class="desc">Much of his movement is linear flash &mdash; <strong>sidestep</strong> to whiff the spins, then F1+2. Stepping kills a big chunk of scary-looking offense.</div></div>
-      <div class="card key-move"><span class="badge poke">your edge</span><div class="move-name">Interrupt with fast pokes</div><div class="desc">There are gaps between his stance moves. Your <strong>jab (X) and df1 (df+X)</strong> beat most stance startups &mdash; once you stop panicking, a simple poke cuts his flow. Calm beats chaos.</div></div>
-    </div>
-    <div class="callout cue" style="margin-top:18px"><div class="co-title">&#10003; Say this vs Eddy</div><div class="mantra">Block low when unsure <span class="sep">&middot;</span> Don't mash into stance <span class="sep">&middot;</span> Step the spins</div></div>
-  </div>
-
-  <!-- add another -->
-  <div class="card" style="margin-top:28px;border-style:dashed;text-align:center;padding:24px">
-    <div class="move-name" style="color:var(--ink-dim)">Want another character added?</div>
-    <div class="desc" style="max-width:460px;margin:8px auto 0">Just say who's beating you and I'll research and add them with the same depth.</div>
-  </div>
-</section>
-
-<!-- ============ PATCH WATCH ============ -->
-<section class="panel-view" id="patch">
-  <div class="section-head">
-    <h2>Patch Watch</h2><span class="tag">current as of June 2026</span>
-  </div>
-  <p class="lead">An honest note: this page <strong>can't update itself</strong> — it's a file, not a live app. But here's what's current, what to re-verify, and the one-tap links to sources that <em>are</em> always live. When a patch drops, ping me and I'll refresh this.</p>
-
-  <div class="card" style="margin-bottom:18px;border-left:3px solid var(--volt)">
-    <div class="move-name">Current version: 3.00.02 (Season 3)</div>
-    <div class="desc">The deep frame data in this trainer is from the Season 2 guide (v2.06). <strong>Neutral, pokes, and punishers are unchanged.</strong> The changes below are system-wide and confirmed from the official patch notes.</div>
-  </div>
-
-  <h3 style="font-family:'Inter';font-weight:700;font-size:1.3rem;margin:20px 0 12px;color:var(--volt)">Season 3 changes that affect YOU</h3>
-  <div class="grid two">
-    <div class="card danger-move">
-      <span class="badge risky">verify your combos</span>
-      <div class="move-name">Heat Smash no longer wall splats</div>
-      <div class="desc">For every character whose Heat Smash used to wall splat, it doesn't anymore. Your old Heat Smash wall routes won't work the same — re-check in Practice.</div>
-    </div>
-    <div class="card danger-move">
-      <span class="badge risky">verify your combos</span>
-      <div class="move-name">Powered states end with Heat</div>
-      <div class="desc">When your Heat timer ends, any powered-up state ends with it. No more carrying it past the bar.</div>
-    </div>
-    <div class="card danger-move">
-      <span class="badge risky">verify your combos</span>
-      <div class="move-name">Air combos tightened</div>
-      <div class="desc">Grounded Heat Engager → Heat Dash combos got shorter, and damage scaling changed from 60% to 70% in those cases.</div>
-    </div>
-    <div class="card safe-move">
-      <span class="badge poke">good for grinders</span>
-      <div class="move-name">Ranked is friendlier now</div>
-      <div class="desc">No demotion unless you lose TWO in a row. A Revenge Bonus gives extra points for winning a rematch after a loss. Promotion bonuses always granted. Matchmaking is now per-character rank.</div>
-    </div>
-  </div>
-
-  <div class="callout cue" style="margin-top:18px">
-    <div class="co-title">✓ The ranked changes reward YOUR discipline plan</div>
-    <p>Demotion protection + revenge bonus literally pay you for "stay calm, win the rematch." This is the boring-disciplined-wins mindset, now with bonus points attached. Don't tilt-queue — win the rematch.</p>
-  </div>
-
-  <h3 style="font-family:'Inter';font-weight:700;font-size:1.3rem;margin:24px 0 12px;color:var(--volt)">Always-live sources (tap these)</h3>
-  <div class="grid two">
-    <a href="https://tekkendocs.com/t8/lars" target="_blank" rel="noopener" class="card" style="text-decoration:none;color:inherit;display:block">
-      <div class="move-name" style="color:var(--volt)">TekkenDocs — Lars frame data →</div>
-      <div class="desc">Community-maintained, updated within days of each patch. Shows the game version at the top so you know it's current.</div>
-    </a>
-    <a href="https://tekkendocs.com/t8/lars/guide" target="_blank" rel="noopener" class="card" style="text-decoration:none;color:inherit;display:block">
-      <div class="move-name" style="color:var(--volt)">TekkenDocs — full Lars guide →</div>
-      <div class="desc">The KayDash guide this trainer is built from. Punishers, combos, defensive notes, all in one place.</div>
-    </a>
-    <a href="https://www.bandainamcoent.com/news?game=tekken-8&category=game-updates" target="_blank" rel="noopener" class="card" style="text-decoration:none;color:inherit;display:block">
-      <div class="move-name" style="color:var(--volt)">Official patch notes →</div>
-      <div class="desc">Bandai Namco's source. Per-character changes are posted as images here each patch.</div>
-    </a>
-    <div class="card" style="border-left:3px solid var(--safe)">
-      <div class="move-name" style="color:var(--safe)">In-game move list (the truth)</div>
-      <div class="desc">Practice mode → turn on frame data display. This updates automatically with every patch and is NEVER wrong. The final word on any frame.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ PLAN ============ -->
-<section class="panel-view" id="plan">
-  <div class="section-head">
-    <h2>Practice Plan</h2><span class="tag">tap a box to check it off</span>
-  </div>
-  <p class="lead">In order. Don't skip ahead to stances and combos — your climb is in the fundamentals. Your progress saves on this device.</p>
-
-  <div class="week">
-    <div class="wk-head"><span class="wk-num">1</span> Fundamentals only</div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">Punish drill.</span> Set CPU to an unsafe move. Block → 2,1 (Y,X), 20 reps. Then block → F1+2 (f+X+Y) launch, 20 reps.</div></div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">Poke-only sets.</span> Play matches using ONLY df1 (X), jab (X), b1 (X), and db4 (B) sparingly. No stances. Get comfortable checking.</div></div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">One combo.</span> F1+2 → f2,1 → df1 → b3. Land it 10× in a row.</div></div>
-  </div>
-
-  <div class="week">
-    <div class="wk-head"><span class="wk-num">2</span> Add defense</div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">Hwoarang drill.</span> vs Hwoarang ghost/CPU: practice "block the string, punish the end."</div></div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">Throw breaks.</span> Practice menu → set CPU to throw → break with the matching button. Start with X+Y.</div></div>
-  </div>
-
-  <div class="week">
-    <div class="wk-head"><span class="wk-num">3</span> Add identity</div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">SEN pressure.</span> Start using df2 (df+Y) and its SEN transition.</div></div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">First real mixups.</span> Learn DEN3 and SEN2.</div></div>
-    <div class="step"><div class="chk"></div><div class="step-body"><span class="st-title">Wall carry.</span> Optimize one combo to reach the wall for big damage.</div></div>
-  </div>
-
-  <div class="callout info">
-    <div class="co-title">Remember why this order</div>
-    <p>Your Attack is already S-tier. You don't need more offense — you need to <strong>block, punish cleanly, and stop pressing when it's not your turn.</strong> That's ranks 1–3 of this plan. Everything flashy comes after.</p>
-  </div>
-</section>
-
-<!-- ============ HOW THIS WORKS ============ -->
-<section class="panel-view" id="howto">
-  <div class="section-head">
-    <h2>How This Works</h2><span class="tag">read once, then forget it exists</span>
-  </div>
-  <p class="lead">This is a single file that lives on your device. No internet, no login, no setup. Here's how to use it and how it stays current.</p>
-
-  <div class="grid two">
-    <div class="card key-move">
-      <div class="move-name">📂 Running it</div>
-      <div class="desc">Just double-click the file — it opens in your browser and works offline. Keep it on your desktop, or drag it to your phone. Bookmark it for one-tap access. Nothing to install.</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">💾 Your progress saves</div>
-      <div class="desc">The Practice Plan checkboxes and your last-open tab save automatically in your browser. Close it, reopen it — your checks are still there.</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">➕ Adding matchups</div>
-      <div class="desc">Tell me "I keep losing to ___" and I'll research that character's unsafe moves and your Lars answers, then send you a fresh copy of this file with the new page added. Replace your old file with the new one.</div>
-    </div>
-    <div class="card key-move">
-      <div class="move-name">⚡ When a patch drops</div>
-      <div class="desc">Message me "new patch is out" (or paste the notes). I'll dig out the Lars changes and what they mean, update the Patch Watch tab, and send you the refreshed file.</div>
-    </div>
-  </div>
-
-  <div class="callout warn" style="margin-top:18px">
-    <div class="co-title">⚠ Two honest limits</div>
-    <p><strong>It can't update itself.</strong> A file on your device can't pull live patch data — that's why updates come through me. <strong>Saved checks are per-file-location.</strong> When you swap in a new copy I send, the checkboxes may reset (the matchup content is what matters, not the checks). Small price for a thing that just works with zero setup.</p>
-  </div>
-
-  <div class="callout info">
-    <div class="co-title">The one source that's never wrong</div>
-    <p>For any exact frame number, the <strong>in-game move list with frame data turned on</strong> (Practice mode) updates with every patch automatically and is always correct. This trainer is your <em>gameplan and memory</em>; the in-game list is the <em>final word</em> on numbers.</p>
-  </div>
-</section>
-
-</main>
-
-<footer>
-  Sources: TekkenDocs (KayDash Season 2 guide, v2.06) for frame data · Bandai Namco patch notes for Season 3 system changes.
-  Neutral, pokes, and punishers are current; verify Heat routes in Practice mode.
-  Always trust the in-game move list — turn on frame data display in Practice.<br><br>
-  Built for RIDD · Lars · climb with fundamentals, not luck.
+  <div class="fbar">Frame data from tekkendocs.com &amp; rbnorway.org · Verify in-game. · Built for RIDD &amp; crew.</div>
 </footer>
 
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
 <script>
-  // Tab switching — remembers your last tab when you reopen the file
-  const tabs = document.querySelectorAll('.tab');
-  const views = document.querySelectorAll('.panel-view');
+const ROSTER=[["alisa","Alisa"],["anna","Anna"],["armor-king","Armor King"],["asuka","Asuka"],["azucena","Azucena"],["bob","Bob"],["bryan","Bryan"],["claudio","Claudio"],["clive","Clive"],["devil-jin","Devil Jin"],["dragunov","Dragunov"],["eddy","Eddy"],["fahkumram","Fahkumram"],["feng","Feng"],["heihachi","Heihachi"],["hwoarang","Hwoarang"],["jack-8","Jack-8"],["jin","Jin"],["jun","Jun"],["kazuya","Kazuya"],["king","King"],["kuma","Kuma"],["kunimitsu","Kunimitsu"],["lars","Lars"],["law","Law"],["lee","Lee"],["leo","Leo"],["leroy","Leroy"],["lidia","Lidia"],["lili","Lili"],["miary","Miary Zo"],["nina","Nina"],["panda","Panda"],["paul","Paul"],["raven","Raven"],["reina","Reina"],["shaheen","Shaheen"],["steve","Steve"],["victor","Victor"],["xiaoyu","Xiaoyu"],["yoshimitsu","Yoshimitsu"],["zafina","Zafina"]];
+const DEEP_LARS = ["bryan","dragunov","jin","devil-jin","king","armor-king","eddy","hwoarang"];
 
-  function showTab(target){
-    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===target));
-    views.forEach(v=>v.classList.toggle('active', v.id===target));
-    try{ localStorage.setItem('lars_last_tab', target); }catch(e){}
-  }
-  tabs.forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      showTab(tab.dataset.tab);
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
-  });
-  // restore last tab on load
+const trImg=document.getElementById("trImg"),trName=document.getElementById("trName"),trSub=document.getElementById("trSub"),charSwitch=document.getElementById("charSwitch"),signinNote=document.getElementById("signinNote"),loading=document.getElementById("loading"),errSlot=document.getElementById("errSlot"),panels=document.getElementById("panels"),navAuth=document.getElementById("navAuth"),tabs=document.getElementById("tabs");
+ROSTER.forEach(([s,n])=>charSwitch.appendChild(new Option(n,s)));
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function cap(s){const f=ROSTER.find(r=>r[0]===s);return f?f[1]:s;}
+function blkClass(b){const n=parseInt(String(b).match(/-?\d+/)?String(b).match(/-?\d+/)[0]:"",10);if(isNaN(n))return "";if(n>=0)return "plus";if(n<=-15)return "bigminus";if(n<=-10)return "minus";return "";}
+
+let playbook=null, activeTab="punishers", currentChar="lars";
+
+(async function(){
+  // try to detect signed-in user's main
+  let main="lars", signedIn=false;
   try{
-    const saved = localStorage.getItem('lars_last_tab');
-    if(saved && document.getElementById(saved)) showTab(saved);
+    const clerk=await TEK.initClerk();
+    if(TEK.isSignedIn()){
+      signedIn=true;
+      const ub=document.createElement("div"); navAuth.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"});
+      const {ok,data}=await TEK.api("/api/me/profile");
+      if(ok && data && data.profile && data.profile.main_character) main=data.profile.main_character;
+    }
   }catch(e){}
 
-  // Checklist — saves to your browser so progress sticks when you reopen the file.
-  // (Each drill is given a stable id from its position so saved state maps back correctly.)
-  const checks = document.querySelectorAll('.step .chk');
-  checks.forEach((chk,i)=>{
-    const key = 'lars_step_' + i;
-    // restore saved state
-    try{
-      if(localStorage.getItem(key)==='1'){
-        chk.classList.add('done');
-        chk.closest('.step').classList.add('done');
-        chk.textContent = '✓';
-      }
-    }catch(e){}
-    chk.addEventListener('click',()=>{
-      const done = chk.classList.toggle('done');
-      chk.closest('.step').classList.toggle('done');
-      chk.textContent = done ? '✓' : '';
-      try{ localStorage.setItem(key, done ? '1' : '0'); }catch(e){}
-    });
-  });
+  if(!signedIn){
+    signinNote.innerHTML='<div class="signin-note">👋 This trainer personalizes to <strong>your main</strong>. <a href="./dashboard.html">Sign in</a> and set your character, or just browse any character below.</div>';
+  }
+
+  // URL override
+  const urlChar=new URLSearchParams(location.search).get("char");
+  if(urlChar) main=urlChar;
+
+  charSwitch.value = ROSTER.find(r=>r[0]===main) ? main : "lars";
+  loadChar(charSwitch.value, signedIn);
+})();
+
+charSwitch.addEventListener("change",()=>loadChar(charSwitch.value));
+tabs.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{activeTab=t.dataset.t;tabs.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));renderPanel();}));
+
+async function loadChar(slug, signedIn){
+  currentChar=slug;
+  trName.textContent=cap(slug)+" Trainer";
+  trSub.textContent="Loading "+cap(slug)+"'s playbook…";
+  trImg.style.display="block"; trImg.src=TekAssets.charImg(slug);
+  trImg.onerror=function(){trImg.style.display="none";};
+  errSlot.innerHTML=""; panels.innerHTML=""; loading.style.display="block";
+  try{
+    const r=await fetch("/api/playbook?char="+encodeURIComponent(slug));
+    const d=await r.json(); loading.style.display="none";
+    if(!r.ok||d.error){ errSlot.innerHTML='<div class="empty">Couldn\'t load '+esc(cap(slug))+'\'s data. '+esc(d.error||"")+'</div>'; return; }
+    playbook=d.playbook;
+    trSub.textContent="Personalized playbook · computed from live frame data";
+    renderPanel();
+  }catch(e){ loading.style.display="none"; errSlot.innerHTML='<div class="empty">Couldn\'t reach the playbook service. (Deployed site only.)</div>'; }
+}
+
+function moveCard(m){
+  if(!m) return "";
+  return '<div class="move"><div class="mc">'+esc(m.command)+'</div>'+(m.name?'<div class="mn">'+esc(m.name)+'</div>':'')+
+    '<div class="mstats">'+
+      (m.startup?'<span class="st">i<b>'+esc(String(m.startup).replace(/^i/,''))+'</b></span>':'')+
+      (m.block?'<span class="st blk '+blkClass(m.block)+'">blk <b>'+esc(m.block)+'</b></span>':'')+
+      (m.hit?'<span class="st">hit <b>'+esc(m.hit)+'</b></span>':'')+
+    '</div>'+(m.notes?'<div class="mnote">'+esc(m.notes)+'</div>':'')+'</div>';
+}
+function grid(arr){ if(!arr||!arr.length) return '<div class="empty">Nothing notable here for this character.</div>'; return '<div class="move-grid">'+arr.map(moveCard).join("")+'</div>'; }
+
+function renderPanel(){
+  if(!playbook){ panels.innerHTML=""; return; }
+  const intros={
+    punishers:"<strong>The #1 way to climb.</strong> Block their unsafe move, then hit the matching punish. Memorize your i10 and i15 — those win the most games.",
+    pokes:"Fast, safe-ish moves to control space and keep your turn. Low commitment, high frequency.",
+    launchers:"Your big-reward starters. Land these on whiff or after a block punish for full combos.",
+    lows:"Mix in lows to open up blockers — but most are unsafe, so don't spam them.",
+    safe_mids:"Mids that stay safe (or plus) on block — your pressure tools that beat ducking.",
+    heat_engagers:"Moves that activate Heat. Learn which ones are safe and which give the best Heat pressure.",
+    homing:"These track sidesteps — your answer to opponents who step everything.",
+    power_crushes:"Absorb a hit and plow through. Use to beat predictable pressure (but they lose to lows & throws).",
+    throws:"Throws are free damage if they don't break. Mix them into your offense.",
+    defense:""
+  };
+  let h="";
+  if(activeTab==="defense"){
+    h='<div class="panel-intro"><strong>Defense wins ranked.</strong> The fundamentals below apply to every character:</div>';
+    h+='<div class="move-grid">'+
+      defenseCard("Block low more","If you\'re getting hit by lows, you\'re not crouch-blocking enough. Most lows are -12 or worse — block, then punish with your while-standing move.")+
+      defenseCard("Punish on block","When you block something unsafe, ALWAYS punish. Use the Punishers tab. Not punishing is free damage you\'re giving away.")+
+      defenseCard("Stop pressing","After you block, it\'s often NOT your turn. Pressing a button into their plus frames gets you counter-hit. Wait, block, then take your turn.")+
+      defenseCard("Sidestep & duck","Step jabs and linear strings; duck obvious highs. Use the Matchup Lab to see which of their moves are duckable/steppable.")+
+      defenseCard("Break throws","Watch the throw animation: 1 break = left hand forward, 2 break = right. 1+2 throws need 1+2. Practice in training.")+
+      defenseCard("Respect, then take turn","If they\'re plus and pressuring, block 1-2 hits, THEN contest. Patience beats mashing at every rank below the top.")+
+    '</div>';
+    // deep matchup link for Lars
+    if(currentChar==="lars"){
+      h+='<div class="deeplink">📖 You main Lars — there are <strong>8 deep matchup guides</strong> (Bryan, Dragunov, Jin, Devil Jin, King, Armor King, Eddy, Hwoarang) with specific threats and punishes. <a href="./matchup.html?me=lars&opp=bryan">Open the Matchup Lab →</a></div>';
+    } else {
+      h+='<div class="deeplink">🔍 Scout any opponent\'s unsafe moves, lows, and homing in the <a href="./matchup.html?me='+esc(currentChar)+'&opp=king">Matchup Lab →</a></div>';
+    }
+    panels.innerHTML=h; return;
+  }
+  if(activeTab==="punishers"){
+    const p=playbook.punishers||{};
+    h='<div class="panel-intro">'+intros.punishers+'</div><div class="pun-list">'+
+      punCard("i10","After −10",p.i10)+punCard("i12","After −12",p.i12)+punCard("i13","After −13",p.i13)+
+      punCard("i14","After −14",p.i14)+punCard("i15","Launch −15+",p.i15_launch)+punCard("WS","While rising",p.while_standing)+
+      '</div>';
+    panels.innerHTML=h; return;
+  }
+  h='<div class="panel-intro">'+(intros[activeTab]||"")+'</div>'+grid(playbook[activeTab]);
+  panels.innerHTML=h;
+}
+function punCard(w,label,m){
+  if(!m) return '<div class="pun"><div class="pw">'+w+'</div><div class="pc" style="color:var(--ink-faint)">—</div><div class="pmeta">'+label+'</div></div>';
+  return '<div class="pun"><div class="pw">'+w+' · '+label+'</div><div class="pc">'+esc(m.command)+'</div><div class="pmeta">'+(m.name?esc(m.name)+' · ':'')+esc(m.damage||"")+(m.hit?' · hit '+esc(m.hit):'')+'</div></div>';
+}
+function defenseCard(title,body){ return '<div class="move"><div class="mc" style="font-family:Inter,sans-serif;font-size:.95rem">'+esc(title)+'</div><div class="mnote" style="margin-top:6px;font-size:.82rem">'+esc(body)+'</div></div>'; }
 </script>
 </body>
 </html>
