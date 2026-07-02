@@ -7,7 +7,7 @@
 //  also returns the friendship status between them.
 //  Requires: env.DB
 // ============================================================
-import { getAuthedUserId } from "./_lib/auth.js";
+import { getAuthedUserId } from "../_lib/auth.js";
 
 export async function onRequest(context){
   const { request, env } = context;
@@ -22,9 +22,12 @@ export async function onRequest(context){
   const target = await env.DB.prepare("SELECT id, username FROM users WHERE username = ? COLLATE NOCASE").bind(username).first();
   if (!target) return json({ error:"No such user." },404,cors);
 
-  // privacy row (default public if none)
-  const priv = await env.DB.prepare("SELECT * FROM privacy WHERE user_id = ?").bind(target.id).first()
-    || { profile_public:1, show_matches:1, show_tekken_id:0 };
+  // privacy row (default public if none; resilient if migration not yet run)
+  let priv = { profile_public:1, show_matches:1, show_tekken_id:0 };
+  try {
+    const row = await env.DB.prepare("SELECT * FROM privacy WHERE user_id = ?").bind(target.id).first();
+    if (row) priv = row;
+  } catch(e) { /* privacy table missing — treat as defaults */ }
 
   // viewer (optional) + friendship status
   let viewerId=null, friendStatus="none", isSelf=false;
@@ -33,11 +36,13 @@ export async function onRequest(context){
     const viewer = await env.DB.prepare("SELECT id FROM users WHERE clerk_user_id = ?").bind(clerkId).first();
     if (viewer){ viewerId=viewer.id; isSelf = viewer.id===target.id;
       if(!isSelf){
-        const lo=Math.min(viewer.id,target.id), hi=Math.max(viewer.id,target.id);
-        const f=await env.DB.prepare("SELECT status, requester_id, addressee_id FROM friendships WHERE low_id=? AND high_id=?").bind(lo,hi).first();
-        if(f){ if(f.status==="accepted") friendStatus="friends";
-          else if(f.status==="pending") friendStatus = (f.requester_id===viewer.id?"outgoing":"incoming");
-          else if(f.status==="blocked") friendStatus="blocked"; }
+        try {
+          const lo=Math.min(viewer.id,target.id), hi=Math.max(viewer.id,target.id);
+          const f=await env.DB.prepare("SELECT status, requester_id, addressee_id FROM friendships WHERE low_id=? AND high_id=?").bind(lo,hi).first();
+          if(f){ if(f.status==="accepted") friendStatus="friends";
+            else if(f.status==="pending") friendStatus = (f.requester_id===viewer.id?"outgoing":"incoming");
+            else if(f.status==="blocked") friendStatus="blocked"; }
+        } catch(e) { /* friendships table missing — leave as none */ }
       }
     }
   }
