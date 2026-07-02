@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Move Search — TEK-1</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .searchbar{display:flex;gap:10px;margin:22px 0 8px;max-width:640px}
+  .searchbar input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:.95rem;padding:13px 16px;border-radius:var(--radius-sm);outline:none}
+  .presets{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}
+  .preset{font-family:'JetBrains Mono',monospace;font-size:.72rem;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);padding:7px 12px;border-radius:7px;cursor:pointer;transition:all .12s}
+  .preset:hover{color:var(--ink);border-color:var(--accent-dim)}
+  .preset.on{background:var(--accent);color:#06101c;border-color:var(--accent);font-weight:600}
+  .progress{max-width:640px;margin:8px 0 4px}
+  .progress .bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+  .progress .fill{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent));border-radius:4px;transition:width .2s}
+  .progress .lbl{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);margin-top:5px}
+  .count-line{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin:10px 0}
+  .dt-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+  .dt-scroll{overflow-x:auto}
+  table.dt{width:100%;border-collapse:collapse;min-width:760px}
+  table.dt thead th{position:sticky;top:0;z-index:2;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);text-align:left;padding:12px 14px;background:var(--panel-3);border-bottom:1px solid var(--line);white-space:nowrap}
+  table.dt tbody td{padding:10px 14px;border-bottom:1px solid var(--line-soft);font-size:.86rem;vertical-align:middle}
+  table.dt tbody tr:hover{background:var(--panel-2)}
+  .chr{display:flex;align-items:center;gap:9px;white-space:nowrap}
+  .chr img{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);flex:none}
+  .cmd{font-family:'JetBrains Mono',monospace;font-weight:600;white-space:nowrap}
+  .cmd .mname{color:var(--ink-faint);font-weight:400;font-size:.7rem;font-family:'Inter',sans-serif}
+  .fr{font-family:'JetBrains Mono',monospace;font-weight:600;white-space:nowrap}
+  .fr.plus{color:var(--good)} .fr.minus-sm{color:var(--warn)} .fr.minus-big{color:var(--bad)} .fr.neutral{color:var(--ink-dim)}
+  .state{text-align:center;margin:40px auto;color:var(--ink-dim)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="./index.html"><span class="dot">T</span>TEK-1</a>
+  <a class="navlink" href="./trainer.html">Trainer</a>
+  <a class="navlink" href="./framedata.html">Frame Data</a>
+  <a class="navlink active" href="./movesearch.html">Move Search</a>
+  <a class="navlink" href="./matchup.html">Matchups</a>
+  <a class="navlink" href="./player.html">Player Lookup</a>
+  <a class="navlink" href="./community.html">Community</a>
+  <a class="navlink" href="./tournaments.html">Tournaments</a>
+  <a class="navlink" href="./rank.html">Rank Guide</a>
+  <a class="navlink" href="./dashboard.html">Dashboard</a>
+  <span class="spacer"></span>
+  <span id="navAuth"></span>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">All 42 characters · one search</div>
+  <h1 class="page">Move Search</h1>
+  <p class="lead">Search every move in Tekken 8 at once — or hit a preset to see roster-wide leaderboards like <strong>fastest lows</strong> and <strong>best panic moves</strong>. Live frame data.</p>
+
+  <div class="searchbar">
+    <input id="q" type="text" placeholder="Search moves… (e.g. hellsweep, df+2, snake edge)" autocomplete="off">
+  </div>
+
+  <div class="presets" id="presets">
+    <button class="preset" data-p="fast_launchers">⚡ Fastest launchers</button>
+    <button class="preset" data-p="fast_lows">Fastest lows</button>
+    <button class="preset" data-p="plus_on_block">Most + on block</button>
+    <button class="preset" data-p="safe_pc">Safest power crushes</button>
+    <button class="preset" data-p="fast_homing">Fastest homing</button>
+    <button class="preset" data-p="big_throws">Biggest throws</button>
+  </div>
+
+  <div class="progress" id="progress" style="display:none">
+    <div class="bar"><div class="fill" id="pfill" style="width:0%"></div></div>
+    <div class="lbl" id="plbl">Loading roster… 0/42</div>
+  </div>
+
+  <div class="count-line" id="countLine"></div>
+  <div id="results"><div class="state">Type a search or pick a preset — the roster loads on first use.</div></div>
+</div>
+
+<footer class="site">
+  <div class="fcols">
+    <div class="fbrand"><div class="flogo"><span class="dot">T</span>TEK-1</div><p>Roster-wide move search from live TekkenDocs frame data.</p></div>
+    <div class="fcol"><h4>Tools</h4><a href="./trainer.html">Trainer</a><a href="./framedata.html">Frame Data</a><a href="./matchup.html">Matchups</a><a href="./tournaments.html">Tournaments</a></div>
+    <div class="fcol"><h4>Sources</h4><a href="https://tekkendocs.com" target="_blank" rel="noopener">TekkenDocs</a><a href="https://rbnorway.org" target="_blank" rel="noopener">rbnorway.org</a></div>
+  </div>
+  <div class="fbar">Frame data from tekkendocs.com &amp; rbnorway.org · Verify in-game.</div>
+</footer>
+
+<script src="./assets.js"></script>
+<script src="./tek-auth.js"></script>
+<script>
+(async function(){
+  try{ const clerk=await TEK.initClerk(); const slot=document.getElementById("navAuth");
+    if(TEK.isSignedIn()){ const ub=document.createElement("div"); slot.appendChild(ub); clerk.mountUserButton(ub,{afterSignOutUrl:"/dashboard.html"}); }
+    else slot.innerHTML='<a class="nav-cta" href="./dashboard.html">Sign in</a>';
+  }catch(e){}
+})();
+
+const ROSTER=[["alisa","Alisa"],["anna","Anna"],["armor-king","Armor King"],["asuka","Asuka"],["azucena","Azucena"],["bob","Bob"],["bryan","Bryan"],["claudio","Claudio"],["clive","Clive"],["devil-jin","Devil Jin"],["dragunov","Dragunov"],["eddy","Eddy"],["fahkumram","Fahkumram"],["feng","Feng"],["heihachi","Heihachi"],["hwoarang","Hwoarang"],["jack-8","Jack-8"],["jin","Jin"],["jun","Jun"],["kazuya","Kazuya"],["king","King"],["kuma","Kuma"],["kunimitsu","Kunimitsu"],["lars","Lars"],["law","Law"],["lee","Lee"],["leo","Leo"],["leroy","Leroy"],["lidia","Lidia"],["lili","Lili"],["miary","Miary Zo"],["nina","Nina"],["panda","Panda"],["paul","Paul"],["raven","Raven"],["reina","Reina"],["shaheen","Shaheen"],["steve","Steve"],["victor","Victor"],["xiaoyu","Xiaoyu"],["yoshimitsu","Yoshimitsu"],["zafina","Zafina"]];
+
+const q=document.getElementById("q"),presets=document.getElementById("presets"),progress=document.getElementById("progress"),pfill=document.getElementById("pfill"),plbl=document.getElementById("plbl"),countLine=document.getElementById("countLine"),results=document.getElementById("results");
+let ALL=null, loadingRoster=false, activePreset=null;
+
+function esc(s){if(s==null)return "";return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function su(m){const x=String(m.startup||"").match(/i?(\d+)/);return x?parseInt(x[1],10):null;}
+function blkN(m){const x=String(m.block||"").match(/-?\d+/);return x?parseInt(x[0],10):null;}
+function dmgN(m){const parts=String(m.damage||"").match(/\d+/g);if(!parts)return 0;return parts.reduce((s,x)=>s+parseInt(x,10),0);}
+function blkClass(b){const n=parseInt(String(b).match(/-?\d+/)?String(b).match(/-?\d+/)[0]:"",10);if(isNaN(n))return "neutral";if(n>=0)return "plus";if(n<=-15)return "minus-big";if(n<=-10)return "minus-sm";return "neutral";}
+function isLaunch(m){return /[ai]/.test(String(m.hit||""))||/launch|tornado/i.test(String(m.notes||""));}
+
+async function ensureRoster(){
+  if(ALL||loadingRoster) return ALL;
+  loadingRoster=true; progress.style.display="block";
+  ALL=[]; let done=0;
+  // batches of 7 to be gentle
+  for(let i=0;i<ROSTER.length;i+=7){
+    const batch=ROSTER.slice(i,i+7);
+    await Promise.all(batch.map(async ([slug,name])=>{
+      try{
+        const r=await fetch("/api/framedata?char="+encodeURIComponent(slug));
+        const d=await r.json();
+        if(r.ok&&d.moves) d.moves.forEach(m=>ALL.push({...m,_char:name,_slug:slug}));
+      }catch(e){}
+      done++; pfill.style.width=Math.round(done/ROSTER.length*100)+"%"; plbl.textContent="Loading roster… "+done+"/"+ROSTER.length;
+    }));
+  }
+  progress.style.display="none"; loadingRoster=false;
+  return ALL;
+}
+
+const PRESETS={
+  fast_launchers:{label:"Fastest launchers (mids)",filter:m=>isLaunch(m)&&/m/i.test(String(m.hitLevel||""))&&su(m)!==null,sort:(a,b)=>su(a)-su(b),limit:30},
+  fast_lows:{label:"Fastest lows",filter:m=>/l/i.test(String(m.hitLevel||""))&&!/sl|fl/i.test(String(m.hitLevel||""))&&su(m)!==null,sort:(a,b)=>su(a)-su(b),limit:30},
+  plus_on_block:{label:"Most plus on block",filter:m=>blkN(m)!==null&&blkN(m)>0,sort:(a,b)=>blkN(b)-blkN(a),limit:30},
+  safe_pc:{label:"Safest power crushes",filter:m=>(m.isPowerCrush||/\bpc\b/.test(String(m.tags||"")))&&blkN(m)!==null,sort:(a,b)=>blkN(b)-blkN(a),limit:30},
+  fast_homing:{label:"Fastest homing moves",filter:m=>(m.isHoming||/\bhom\b/.test(String(m.tags||"")))&&su(m)!==null,sort:(a,b)=>su(a)-su(b),limit:30},
+  big_throws:{label:"Biggest damage throws",filter:m=>(m.isThrow||/^t/i.test(String(m.hitLevel||"")))&&dmgN(m)>0,sort:(a,b)=>dmgN(b)-dmgN(a),limit:30},
+};
+
+let debounce=null;
+q.addEventListener("input",()=>{ activePreset=null; updatePresetUI(); clearTimeout(debounce); debounce=setTimeout(runSearch,300); });
+presets.querySelectorAll(".preset").forEach(b=>b.addEventListener("click",async()=>{ q.value=""; activePreset=b.dataset.p; updatePresetUI(); runPreset(); }));
+function updatePresetUI(){ presets.querySelectorAll(".preset").forEach(b=>b.classList.toggle("on",b.dataset.p===activePreset)); }
+
+async function runSearch(){
+  const text=q.value.trim().toLowerCase();
+  if(!text){ if(!activePreset){results.innerHTML='<div class="state">Type a search or pick a preset.</div>';countLine.textContent="";} return; }
+  await ensureRoster();
+  const rows=ALL.filter(m=>[m.command,m.name,m.notes,m._char].some(f=>String(f||"").toLowerCase().includes(text))).slice(0,120);
+  renderRows(rows,'Results for "'+text+'"');
+}
+async function runPreset(){
+  await ensureRoster();
+  const p=PRESETS[activePreset]; if(!p) return;
+  const rows=ALL.filter(p.filter).sort(p.sort).slice(0,p.limit);
+  renderRows(rows,p.label);
+}
+
+function renderRows(rows,label){
+  countLine.textContent=rows.length+" moves · "+label;
+  if(!rows.length){ results.innerHTML='<div class="state">Nothing matched.</div>'; return; }
+  let h='<div class="dt-wrap"><div class="dt-scroll"><table class="dt"><thead><tr><th>Character</th><th>Command</th><th>Hit</th><th>Speed</th><th>On Block</th><th>On Hit</th><th>Dmg</th></tr></thead><tbody>';
+  rows.forEach(m=>{
+    h+='<tr><td><span class="chr"><img src="'+TekAssets.charImg(m._slug)+'" alt="" onerror="this.style.display=\'none\'"><a href="./framedata.html?char='+esc(m._slug)+'" style="color:inherit;text-decoration:none">'+esc(m._char)+'</a></span></td>'+
+      '<td class="cmd">'+esc(m.command)+(m.name?'<div class="mname">'+esc(m.name)+'</div>':'')+'</td>'+
+      '<td class="fr neutral">'+esc(m.hitLevel||"")+'</td>'+
+      '<td class="fr neutral">'+esc(m.startup||"")+'</td>'+
+      '<td class="fr '+blkClass(m.block)+'">'+esc(m.block||"")+'</td>'+
+      '<td class="fr neutral">'+esc(m.hit||"")+'</td>'+
+      '<td class="fr neutral">'+esc(m.damage||"")+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  results.innerHTML=h;
+}
+</script>
+</body>
+</html>
